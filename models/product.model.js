@@ -1,20 +1,32 @@
 import mongoose from 'mongoose';
 const productSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: { type: String, required: true, trim: true },
     description: { type: String, required: true },
     brand: { type: String, required: true },
-    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
     subCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
     thirdSubCategoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
-    rating: { type: Number, default: 0 },
-    discount: { type: Number, default: 0 },
-    tags: [{ type: String }],
-    dateCreated: { type: Date, default: Date.now },
+
+    images: [{ type: String, required: true }], // Array of image URLs
+
     isFeatured: { type: Boolean, default: false },
-    variants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Variant' }],
     isUnlisted: { type: Boolean, default: false },
-    reviewCount: { type: Number, default: '' },
+
+    hasVariant: { type: Boolean, default: false },
+
+    // Fields for Simple Products (if hasVariant: false)
+    price: { type: Number, default: 0 },
+    oldPrice: { type: Number, default: 0 },
+    stock: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
+
+    // Fields for Variable Products (if hasVariant: true)
+    variants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Variant' }],
+
+    rating: { type: Number, default: 0 },
+    reviewCount: { type: Number, default: 0 },
+    tags: [{ type: String }],
   },
   { timestamps: true }
 );

@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const homeSlidesSchema = new mongoose.Schema({
+  section: {
+    type: String,
+    default: '',
+  },
   description: {
     type: String,
     required: true,

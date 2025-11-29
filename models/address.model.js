@@ -1,32 +1,32 @@
 import mongoose from 'mongoose';
 const addressSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     name: {
       type: String,
       required: true,
-      default: '',
+      trim: true,
     },
-    address_line: {
+    addressLine: {
       type: String,
       required: true,
-      default: '',
+      trim: true,
     },
     city: {
       type: String,
       required: true,
-      default: '',
-    },
-    locality: {
-      type: String,
-      required: true,
-      default: '',
+      trim: true,
     },
     state: {
       type: String,
       required: true,
-      default: '',
+      trim: true,
     },
-    pin_code: {
+    pincode: {
       type: String,
       required: true,
       match: /^[0-9]{5,6}$/,
@@ -36,20 +36,11 @@ const addressSchema = new mongoose.Schema(
       required: true,
       match: /^[0-9]{10}$/,
     },
-    alternative_mobile: {
+    type: {
       type: String,
-      match: /^[0-9]{10}$/,
+      enum: ['Home', 'Work'],
+      default: 'Home',
     },
-    landmark: {
-      type: String,
-      default: '',
-    },
-    userId: {
-      type: mongoose.Schema.ObjectId,
-      ref: 'User',
-      default: '',
-    },
-    type: { type: String, enum: ['Home', 'Office'], default: 'Home' },
     isDefault: {
       type: Boolean,
       default: false,

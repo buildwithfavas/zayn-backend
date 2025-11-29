@@ -12,10 +12,11 @@ const ReviewSchema = new mongoose.Schema(
       required: true,
       ref: 'Product',
     },
-    review: {
+    comment: {
       type: String,
       default: '',
     },
+    images: [{ type: String }],
     rating: {
       type: Number,
       default: null,

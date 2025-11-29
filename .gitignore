@@ -35,3 +35,7 @@ lint_output.txt
 
 # Environment variables
 .env.*
+
+
+registration_flow_documentation.md
+database_design.md

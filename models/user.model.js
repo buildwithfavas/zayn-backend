@@ -1,30 +1,39 @@
 import mongoose from 'mongoose';
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    firstName: {
       type: String,
-      required: [true, 'name is required  '],
+      required: [true, 'First name is required'],
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      required: [true, 'Last name is required'],
+      trim: true,
     },
     email: {
       type: String,
-      required: [true, 'email is required'],
+      required: [true, 'Email is required'],
       unique: true,
-      match: [/^\S+@\S+\.\S+$/, 'please provide a valid email'],
+      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
+      lowercase: true,
+      trim: true,
     },
     password: {
       type: String,
       default: '',
     },
-    image: {
+    gender: {
       type: String,
-      default: '',
+      enum: ['Male', 'Female', 'Other'],
+      default: 'Other',
     },
     mobile: {
-      type: Number,
+      type: String, // Changed to String to handle country codes etc.
       default: null,
     },
-    last_login_date: {
-      type: Date,
+    image: {
+      type: String,
       default: '',
     },
     isBlocked: {
@@ -34,10 +43,6 @@ const userSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
-    },
-    refresh_token: {
-      type: String,
-      default: '',
     },
     googleId: {
       type: String,
@@ -49,6 +54,19 @@ const userSchema = new mongoose.Schema(
     },
     referralCode: {
       type: String,
+      unique: true,
+      sparse: true, // Allows null/undefined to be unique
+    },
+    wallet: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Wallet',
+    },
+    last_login_date: {
+      type: Date,
+      default: null,
+    },
+    refresh_token: {
+      type: String,
       default: '',
     },
   },
@@ -56,19 +74,23 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
 userSchema.pre('save', async function (next) {
-  if (this.isNew) {
-    const base = this.name.slice(0, 3).toUpperCase();
+  if (this.isNew && !this.referralCode) {
+    const base = (this.firstName || 'USER').slice(0, 3).toUpperCase();
     let exist = true;
     let code = '';
     while (exist) {
       const random = Math.floor(1000 + Math.random() * 9000);
       code = `${base}${random}`;
-      exist = await userModel.exists({ referralCode: code });
+      // Access model via this.constructor to avoid circular dependency issues or undefined userModel
+      const User = this.constructor;
+      exist = await User.exists({ referralCode: code });
     }
     this.referralCode = code;
   }
   next();
 });
+
 const userModel = mongoose.model('User', userSchema);
 export default userModel;

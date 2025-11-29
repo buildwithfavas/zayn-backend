@@ -9,23 +9,30 @@ const categorySchema = new mongoose.Schema(
     },
     image: {
       type: String,
+      default: '',
     },
     parentCatName: {
       type: String,
       default: '',
     },
     parentId: {
-      type: mongoose.Schema.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
       default: null,
     },
     level: {
       type: String,
+      enum: ['first', 'second', 'third'],
       default: 'first',
     },
-    isBlocked: {
+    isListed: {
       type: Boolean,
-      default: false,
+      default: true,
+    },
+    offer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Offer',
+      default: null,
     },
   },
   { timestamps: true }

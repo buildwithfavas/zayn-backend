@@ -1,4 +1,3 @@
-// middlewares/validation/signupValidation.js
 import { body } from 'express-validator';
 
 export const signupValidation = [

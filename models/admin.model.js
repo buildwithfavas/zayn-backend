@@ -15,6 +15,11 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: [true, 'password is required'],
   },
+  role: {
+    type: String,
+    enum: ['SuperAdmin', 'Editor'],
+    default: 'SuperAdmin',
+  },
   last_login_date: {
     type: Date,
     default: '',

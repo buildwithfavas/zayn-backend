@@ -25,6 +25,10 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    maxDiscountAmount: {
+      type: Number,
+      default: 0,
+    },
     scope: {
       type: String,
       enum: ['User', 'First Order', 'Global'],
