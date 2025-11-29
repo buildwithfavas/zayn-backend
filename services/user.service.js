@@ -230,7 +230,7 @@ export const authMeService = async (userId) => {
   }
   return obj;
 };
-export const appleAuthService = async (user) => {
+export const facebookAuthService = async (user) => {
   const accessToken = await generateAccessToken(user._id, 'User');
   const refreshToken = await generateRefreshToken(user._id, 'User');
   return { accessToken, refreshToken };

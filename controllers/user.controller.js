@@ -6,7 +6,7 @@ import {
   emailChangeOtpService,
   emailChangeResendOtpService,
   emailChangeVerifyService,
-  appleAuth,
+  facebookAuthService,
   forgotPasswordServices,
   getUserChartDataService,
   googleAuthService,
@@ -96,12 +96,12 @@ export const googleAuth = async (req, res) => {
   res.cookie('refreshToken', refreshToken, cookieOption);
   return res.redirect(process.env.FRONTEND_URL + '/');
 };
-export const appleAuth = async (req, res) => {
+export const facebookAuth = async (req, res) => {
   const user = req.user;
   if (!user) {
-    throw new AppError('Apple authentication failed', STATUS_CODES.NOT_FOUND);
+    throw new AppError('Facebook authentication failed', STATUS_CODES.NOT_FOUND);
   }
-  const { accessToken, refreshToken } = await appleAuthService(user);
+  const { accessToken, refreshToken } = await facebookAuthService(user);
 
   const isProduction = process.env.NODE_ENV === 'production';
   const cookieOption = {

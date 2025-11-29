@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 import AppError from '../middlewares/Error/appError.js';
-import cartModel from '../models/cart.mode.js';
+import cartModel from '../models/cart.model.js';
 import orderModel from '../models/orders.model.js';
 import productModel from '../models/product.model.js';
-import variantModel from '../models/variant.schema.js';
+import variantModel from '../models/variant.model.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
-import reviewModel from '../models/reveiw.model.js';
+import reviewModel from '../models/review.model.js';
 import wishlistModal from '../models/wishlist.model.js';
 import walletModel from '../models/wallet.model.js';
 import walletTransactionsModel from '../models/walletTransactions.model.js';

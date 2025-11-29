@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   authMe,
   chatController,
-  appleAuth,
+  facebookAuth,
   googleAuth,
   loginController,
   logoutController,
@@ -62,19 +62,19 @@ userRouter.get(
   googleAuth
 );
 userRouter.get(
-  '/apple',
-  passport.authenticate('apple', {
-    scope: ['name', 'email'],
+  '/facebook',
+  passport.authenticate('facebook', {
+    scope: ['email'],
     session: false,
   })
 );
 userRouter.post(
-  '/apple/callback',
-  passport.authenticate('apple', {
+  '/facebook/callback',
+  passport.authenticate('facebook', {
     failureRedirect: process.env.FRONTEND_URL + '/login',
     session: false,
   }),
-  appleAuth
+  facebookAuth
 );
 
 userRouter.get('/logout', userAuth, asyncHandler(logoutController));

@@ -6,7 +6,7 @@ import { createStream } from 'rotating-file-stream';
 dotenv.config();
 import cookieParser from 'cookie-parser';
 import './utils/googleAuthSetup.js';
-import './utils/appleAuthSetup.js';
+import './utils/facebookAuthSetup.js';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import connectDb from './config/connectDb.js';

@@ -1,7 +1,7 @@
 import AppError from '../middlewares/Error/appError.js';
-import cartModel from '../models/cart.mode.js';
+import cartModel from '../models/cart.model.js';
 import productModel from '../models/product.model.js';
-import variantModel from '../models/variant.schema.js';
+import variantModel from '../models/variant.model.js';
 import wishlistModal from '../models/wishlist.model.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';

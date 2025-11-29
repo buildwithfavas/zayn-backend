@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import AppError from '../middlewares/Error/appError.js';
 import couponModel from '../models/coupon.model.js';
 import orderModel from '../models/orders.model.js';
-import variantModel from '../models/variant.schema.js';
+import variantModel from '../models/variant.model.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 

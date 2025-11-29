@@ -2,7 +2,7 @@ import AppError from '../middlewares/Error/appError.js';
 import categoryModel from '../models/category.model.js';
 import productModel from '../models/product.model.js';
 import { v2 as cloudinary } from 'cloudinary';
-import variantModel from '../models/variant.schema.js';
+import variantModel from '../models/variant.model.js';
 import fs from 'fs';
 import mongoose from 'mongoose';
 import { STATUS_CODES } from '../utils/statusCodes.js';
