@@ -1,16 +1,29 @@
 import { body } from 'express-validator';
 
 export const signupValidation = [
-  body('name')
+  body('firstName')
     .notEmpty()
-    .withMessage('Name is required')
+    .withMessage('First Name is required')
     .isLength({ min: 3 })
     .withMessage('Please enter minimum 3 characters')
     .matches(/^[A-Za-z ]+$/)
-    .withMessage('Name can only contain letters and spaces')
+    .withMessage('First Name can only contain letters and spaces')
     .custom((value) => {
       if (value.trim().length === 0) {
-        throw new Error('Name cannot be only spaces');
+        throw new Error('First Name cannot be only spaces');
+      }
+      return true;
+    }),
+  body('lastName')
+    .notEmpty()
+    .withMessage('Last Name is required')
+    .isLength({ min: 1 })
+    .withMessage('Please enter minimum 1 characters')
+    .matches(/^[A-Za-z ]+$/)
+    .withMessage('Last Name can only contain letters and spaces')
+    .custom((value) => {
+      if (value.trim().length === 0) {
+        throw new Error('Last Name cannot be only spaces');
       }
       return true;
     }),
@@ -27,15 +40,6 @@ export const signupValidation = [
     .custom((value) => {
       if (value.trim().length === 0) {
         throw new Error('Password cannot be only spaces');
-      }
-      return true;
-    }),
-  body('confirmPassword')
-    .notEmpty()
-    .withMessage('Must enter confirm password')
-    .custom((value, { req }) => {
-      if (value !== req.body.password) {
-        throw new Error('Passwords must match');
       }
       return true;
     }),

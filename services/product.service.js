@@ -618,12 +618,12 @@ export const getSearchSuggestionsService = async (q) => {
   return { products, categories };
 };
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_TEST_KEY_ID,
-  key_secret: process.env.RAZORPAY_TEST_KEY_SECRET,
-});
-
 export const createRazorpayOrderService = async ({ amount, items, failed = false }) => {
+  const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_TEST_KEY_ID,
+    key_secret: process.env.RAZORPAY_TEST_KEY_SECRET,
+  });
+
   if (failed) {
     for (let item of items) {
       const product = await productModel

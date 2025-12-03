@@ -17,6 +17,19 @@ const otpSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Temporary storage for pending registration data
+    firstName: {
+      type: String,
+    },
+    lastName: {
+      type: String,
+    },
+    password: {
+      type: String, // Will store hashed password
+    },
+    referralCode: {
+      type: String,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
