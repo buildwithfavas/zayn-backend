@@ -43,7 +43,7 @@ export const blockUserService = async (userId) => {
   if (user.isBlocked) {
     await sendEmail({
       to: user.email,
-      subject: 'Verification mail from shopping cart app',
+      subject: 'Verification mail from Zayn Collection',
       text: `User Blocked`,
       html: accountBlockedMailTemplate(user?.name),
     });
@@ -51,7 +51,7 @@ export const blockUserService = async (userId) => {
   if (!user.isBlocked) {
     await sendEmail({
       to: user.email,
-      subject: 'Verification mail from shopping cart app',
+      subject: 'Verification mail from Zayn Collection',
       text: `User unblocked`,
       html: accountUnblockedMailTemplate(user?.name),
     });

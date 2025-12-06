@@ -177,8 +177,8 @@ export const downloadInvoiceService = async (id, res) => {
     .fontSize(10)
     .font('Helvetica')
     .fillColor('#666666')
-    .text('Shopping cart', 50, 80)
-    .text('shoppingCart@gmail.com', 50, 119);
+    .text('Zayn', 50, 80)
+    .text('zayn@gmail.com', 50, 119);
 
   doc
     .fontSize(10)

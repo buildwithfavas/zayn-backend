@@ -73,7 +73,7 @@ export const registerUserService = async ({
   // Send verification email
   await sendEmail({
     to: email,
-    subject: 'Verification mail from shopping cart app',
+    subject: 'Verification mail from zayn collection',
     text: `Your OTP is ${otp}`,
     html: verifyMailTemplate(firstName, otp),
   });
@@ -151,7 +151,7 @@ export const resendOtpService = async (email) => {
   // Resend verification email
   await sendEmail({
     to: email,
-    subject: 'Verification mail from shopping cart app',
+    subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
     html: verifyMailTemplate(pendingRegistration.firstName, otp),
   });
@@ -208,7 +208,7 @@ export const forgotPasswordServices = async (email) => {
   await user.save();
   await sendEmail({
     to: email,
-    subject: 'Verification mail from shopping cart app',
+    subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
     html: verifyMailTemplate(user?.name, otp),
   });
@@ -381,7 +381,7 @@ export const emailChangeOtpService = async (userId, email) => {
   }
   await sendEmail({
     to: email,
-    subject: 'Verification mail from shopping cart app',
+    subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
     html: verifyMailTemplate(user?.name, otp),
   });
@@ -404,7 +404,7 @@ export const emailChangeResendOtpService = async (email, userId) => {
   }
   await sendEmail({
     to: email,
-    subject: 'Verification mail from shopping cart app',
+    subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
     html: verifyMailTemplate(user.name, otp),
   });

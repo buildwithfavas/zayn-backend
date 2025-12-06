@@ -6,10 +6,17 @@ if (!process.env.MONGODB_URL) {
 }
 async function connectDb() {
   try {
-    mongoose.connect(process.env.MONGODB_URL);
-    console.log('connected to MongoDb');
+    await mongoose.connect(process.env.MONGODB_URL);
+    console.log('✅ Connected to MongoDB Successfully');
   } catch (error) {
-    console.log('error happened while connecting to database', error);
+    console.error('❌ DATABASE CONNECTION ERROR ❌');
+    console.error('------------------------------------------');
+    console.error('Error details:', error.message);
+    if (error.message.includes('SSL') && error.message.includes('alert')) {
+      console.error('CAUSE: IP Address not whitelisted in MongoDB Atlas.');
+      console.error('FIX: Go to MongoDB Atlas > Network Access > Add Current IP Address.');
+    }
+    console.error('------------------------------------------');
     process.exit(1);
   }
 }

@@ -691,7 +691,7 @@ export const createPaypalPayment = async (req, res) => {
           currency: 'USD',
           total: total.toString(),
         },
-        description: 'Order payment on Shopping Cart App',
+        description: 'Order payment on Zayn Collection',
       },
     ],
   };
