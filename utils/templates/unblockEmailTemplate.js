@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const accountUnblockedMailTemplate = (name, supportEmail = 'support@shoppingcart.com') => {
+const accountUnblockedMailTemplate = (name, supportEmail = 'support@zayncollection.com') => {
   const templatePath = path.join(__dirname, 'unblock-email.html');
   let html = fs.readFileSync(templatePath, 'utf8');
 

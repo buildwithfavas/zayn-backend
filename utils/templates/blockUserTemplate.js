@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 const accountBlockedMailTemplate = (
   name,
   reason = null,
-  supportEmail = 'support@shoppingcart.com'
+  supportEmail = 'support@zayncollection.com'
 ) => {
   const templatePath = path.join(__dirname, 'block-user.html');
   let html = fs.readFileSync(templatePath, 'utf8');
