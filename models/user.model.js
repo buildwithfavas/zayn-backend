@@ -75,6 +75,10 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// userSchema.virtual('fullName').get(function () {
+//   return `${this.firstName} ${this.lastName}`;
+// });
+
 userSchema.pre('save', async function (next) {
   if (this.isNew && !this.referralCode) {
     const base = (this.firstName || 'USER').slice(0, 3).toUpperCase();

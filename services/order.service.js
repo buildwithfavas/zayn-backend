@@ -312,7 +312,8 @@ export const getAdminOrdersService = async (page, perPage, query) => {
   if (query.search) {
     filter.$or = [
       { orderId: { $regex: query.search, $options: 'i' } },
-      { 'user.name': { $regex: query.search, $options: 'i' } },
+      { 'user.firstName': { $regex: query.search, $options: 'i' } },
+      { 'user.lastName': { $regex: query.search, $options: 'i' } },
     ];
   }
   if (query.status) {
@@ -369,7 +370,8 @@ export const getAdminOrdersByItemsService = async (query, page, perPage) => {
   if (query.search) {
     filter.$or = [
       { orderId: { $regex: query.search, $options: 'i' } },
-      { 'user.name': { $regex: query.search, $options: 'i' } },
+      { 'user.firstName': { $regex: query.search, $options: 'i' } },
+      { 'user.lastName': { $regex: query.search, $options: 'i' } },
       { 'items.name': { $regex: query.search, $options: 'i' } },
       { 'category.name': { $regex: query.search, $options: 'i' } },
       { 'subCategory.name': { $regex: query.search, $options: 'i' } },
@@ -568,7 +570,8 @@ export const getReturnRequests = async (page, perPage, query) => {
   if (query.search) {
     filter.$or = [
       { orderId: { $regex: query.search, $options: 'i' } },
-      { 'user.name': { $regex: query.search, $options: 'i' } },
+      { 'user.firstName': { $regex: query.search, $options: 'i' } },
+      { 'user.lastName': { $regex: query.search, $options: 'i' } },
       { 'items.name': { $regex: query.search, $options: 'i' } },
     ];
   }

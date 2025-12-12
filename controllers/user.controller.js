@@ -38,11 +38,10 @@ export async function registerUser(req, res) {
 
 export const verifyEmailController = async (req, res) => {
   const { email, otp } = req.body;
-  const query = req.query;
   if (!email || !otp) {
     throw new AppError('Provide email and otp', STATUS_CODES.BAD_REQUEST);
   }
-  await verifyEmailService({ email, otp, query });
+  await verifyEmailService({ email, otp });
   return res.status(STATUS_CODES.OK).json({
     success: true,
     error: false,

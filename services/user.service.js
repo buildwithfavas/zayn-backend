@@ -75,7 +75,7 @@ export const registerUserService = async ({
     to: email,
     subject: 'Verification mail from zayn collection',
     text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(firstName, otp),
+    html: verifyMailTemplate(`${firstName} ${lastName}`, otp),
   });
 
   return { email, firstName, lastName };
@@ -133,6 +133,7 @@ export const verifyEmailService = async ({ email, otp }) => {
 
   return true;
 };
+
 export const resendOtpService = async (email) => {
   // Find pending registration by email
   const pendingRegistration = await OtpModel.findOne({ email: email });
@@ -153,9 +154,13 @@ export const resendOtpService = async (email) => {
     to: email,
     subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(pendingRegistration.firstName, otp),
+    html: verifyMailTemplate(
+      `${pendingRegistration.firstName} ${pendingRegistration.lastName}`,
+      otp
+    ),
   });
 };
+
 export const userLoginService = async ({ email, password }) => {
   const user = await userModel.findOne({ email: email });
 
@@ -182,11 +187,13 @@ export const userLoginService = async ({ email, password }) => {
   });
   return { accessToken, refreshToken, user };
 };
+
 export const googleAuthService = async (user) => {
   const accessToken = await generateAccessToken(user._id, 'User');
   const refreshToken = await generateRefreshToken(user._id, 'User');
   return { accessToken, refreshToken };
 };
+
 export const forgotPasswordServices = async (email) => {
   const user = await userModel.findOne({ email: email });
   if (!user) {
@@ -210,7 +217,7 @@ export const forgotPasswordServices = async (email) => {
     to: email,
     subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(user?.name, otp),
+    html: verifyMailTemplate(`${user.firstName} ${user.lastName}`, otp),
   });
 };
 
@@ -273,6 +280,7 @@ export const authMeService = async (userId) => {
   }
   return obj;
 };
+
 export const facebookAuthService = async (user) => {
   const accessToken = await generateAccessToken(user._id, 'User');
   const refreshToken = await generateRefreshToken(user._id, 'User');
@@ -286,7 +294,7 @@ export const chatService = async (body, userId) => {
 
   const user = await userModel.findById(userId);
   if (user) {
-    contextData += `User Info: Name is ${user.name}, Email is ${user.email}. `;
+    contextData += `User Info: Name is ${user.firstName} ${user.lastName}, Email is ${user.email}. `;
   } else {
     contextData += 'User Info: No specific user information available. ';
   }
@@ -383,7 +391,7 @@ export const emailChangeOtpService = async (userId, email) => {
     to: email,
     subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(user?.name, otp),
+    html: verifyMailTemplate(`${user.firstName} ${user.lastName}`, otp),
   });
 };
 
@@ -406,7 +414,7 @@ export const emailChangeResendOtpService = async (email, userId) => {
     to: email,
     subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(user.name, otp),
+    html: verifyMailTemplate(`${user.firstName} ${user.lastName}`, otp),
   });
 };
 

@@ -45,7 +45,7 @@ export const blockUserService = async (userId) => {
       to: user.email,
       subject: 'Verification mail from Zayn Collection',
       text: `User Blocked`,
-      html: accountBlockedMailTemplate(user?.name),
+      html: accountBlockedMailTemplate(`${user.firstName} ${user.lastName}`),
     });
   }
   if (!user.isBlocked) {
@@ -53,7 +53,7 @@ export const blockUserService = async (userId) => {
       to: user.email,
       subject: 'Verification mail from Zayn Collection',
       text: `User unblocked`,
-      html: accountUnblockedMailTemplate(user?.name),
+      html: accountUnblockedMailTemplate(`${user.firstName} ${user.lastName}`),
     });
   }
   const socketId = onlineUsers.get(userId);
