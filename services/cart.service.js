@@ -6,7 +6,7 @@ import wishlistModal from '../models/wishlist.model.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const addToCartService = async (userId, body) => {
+const addToCartService = async (userId, body) => {
   const cart = await cartModel.find({ userId });
   if (Array.isArray(body)) {
     let cartItem = [];
@@ -75,12 +75,12 @@ export const addToCartService = async (userId, body) => {
   }
 };
 
-export const removeFromCartService = async (id) => {
+const removeFromCartService = async (id) => {
   const item = await cartModel.findByIdAndDelete(id);
   return item;
 };
 
-export const editItemCountService = async (id, mode) => {
+const editItemCountService = async (id, mode) => {
   const item = await cartModel.findById(id).populate('variant');
   if (item.quantity == 5 && mode == 'plus') {
     return new AppError('Adding more than 5 items is not allowed for per product');
@@ -103,7 +103,7 @@ export const editItemCountService = async (id, mode) => {
   return item;
 };
 
-export const getCartItemsService = async (userId) => {
+const getCartItemsService = async (userId) => {
   const result = await cartModel
     .find({ userId })
     .populate({
@@ -124,7 +124,7 @@ export const getCartItemsService = async (userId) => {
   return items;
 };
 
-export const productValidationService = async (body) => {
+const productValidationService = async (body) => {
   const { product, variant, quantity } = body;
   const Product = await productModel
     .findById(product)
@@ -149,4 +149,12 @@ export const productValidationService = async (body) => {
     throw new AppError('This product is not available now');
   }
   return true;
+};
+
+export {
+  addToCartService,
+  removeFromCartService,
+  editItemCountService,
+  getCartItemsService,
+  productValidationService,
 };

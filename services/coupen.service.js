@@ -6,7 +6,7 @@ import variantModel from '../models/variant.model.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const addCouponService = async (body) => {
+const addCouponService = async (body) => {
   const exist = await couponModel.find({ code: body.code });
   if (exist.length > 0) {
     throw new AppError('Already a coupon exist in this code');
@@ -14,7 +14,7 @@ export const addCouponService = async (body) => {
   const coupon = await couponModel.create(body);
   return coupon;
 };
-export const getCouponService = async (page, perPage) => {
+const getCouponService = async (page, perPage) => {
   const totalPosts = await couponModel.countDocuments();
   const coupons = await couponModel
     .find()
@@ -24,7 +24,7 @@ export const getCouponService = async (page, perPage) => {
   return { coupons, totalPosts };
 };
 
-export const editCouponService = async (body, id) => {
+const editCouponService = async (body, id) => {
   const exist = await couponModel.find({ code: body.code });
   const c = await couponModel.findById(id);
   if (exist.length && body.code != c.code) {
@@ -34,7 +34,7 @@ export const editCouponService = async (body, id) => {
   return coupon;
 };
 
-export const toggleCouponStatusService = async (id) => {
+const toggleCouponStatusService = async (id) => {
   const coupon = await couponModel.findByIdAndUpdate(
     id,
     [{ $set: { isActive: { $not: '$isActive' } } }],
@@ -43,7 +43,7 @@ export const toggleCouponStatusService = async (id) => {
   return coupon;
 };
 
-export const getCouponForUserService = async (purchaseValue, userId) => {
+const getCouponForUserService = async (purchaseValue, userId) => {
   const hasOrders = await orderModel.exists({ userId });
   const objectUserId = new mongoose.Types.ObjectId(userId);
   const now = new Date();
@@ -76,7 +76,7 @@ export const getCouponForUserService = async (purchaseValue, userId) => {
   return coupons;
 };
 
-export const applyCouponService = async ({ items, code, purchaseValue, userId }) => {
+const applyCouponService = async ({ items, code, purchaseValue, userId }) => {
   const coupon = await couponModel.findOne({ code });
   if (!coupon) {
     throw new AppError('No Coupon Found in This Code', STATUS_CODES.NOT_FOUND);
@@ -116,7 +116,7 @@ export const applyCouponService = async ({ items, code, purchaseValue, userId })
   return { items: itemsWithCoupon, coupon, couponDeduction };
 };
 
-export const removeAppliedCouponService = async ({ items, code }) => {
+const removeAppliedCouponService = async ({ items, code }) => {
   const coupon = await couponModel.findOne({ code });
   const orderItems = await Promise.all(
     items.map(async (item) => {
@@ -130,4 +130,14 @@ export const removeAppliedCouponService = async ({ items, code }) => {
   coupon.userUsage.pop();
   await coupon.save();
   return orderItems;
+};
+
+export {
+  addCouponService,
+  getCouponService,
+  editCouponService,
+  toggleCouponStatusService,
+  getCouponForUserService,
+  applyCouponService,
+  removeAppliedCouponService,
 };

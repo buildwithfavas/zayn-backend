@@ -6,7 +6,7 @@ import {
 } from '../services/address.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const addAddress = async (req, res) => {
+const addAddress = async (req, res) => {
   const userId = req.userId;
   const body = req.body;
   const address = await addAddressService(body, userId);
@@ -17,7 +17,7 @@ export const addAddress = async (req, res) => {
   });
 };
 
-export const getAddress = async (req, res) => {
+const getAddress = async (req, res) => {
   const userId = req.userId;
   const addresses = await getAddressService(userId);
   res.status(STATUS_CODES.OK).json({
@@ -27,7 +27,7 @@ export const getAddress = async (req, res) => {
   });
 };
 
-export const editAddress = async (req, res) => {
+const editAddress = async (req, res) => {
   const id = req.params.id;
   const body = req.body;
   const address = await editAddressService(id, body);
@@ -39,7 +39,7 @@ export const editAddress = async (req, res) => {
   });
 };
 
-export const deleteAddress = async (req, res) => {
+const deleteAddress = async (req, res) => {
   const id = req.params.id;
   const address = await deleteAddressService(id);
   res.status(STATUS_CODES.OK).json({
@@ -49,3 +49,5 @@ export const deleteAddress = async (req, res) => {
     address,
   });
 };
+
+export { addAddress, getAddress, editAddress, deleteAddress };

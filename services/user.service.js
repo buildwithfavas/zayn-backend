@@ -24,13 +24,7 @@ cloudinary.config({
   secure: true,
 });
 
-export const registerUserService = async ({
-  firstName,
-  lastName,
-  email,
-  password,
-  referralCode,
-}) => {
+const registerUserService = async ({ firstName, lastName, email, password, referralCode }) => {
   // Check if user already exists
   const existingUser = await userModel.findOne({ email: email });
   if (existingUser) {
@@ -44,7 +38,8 @@ export const registerUserService = async ({
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  if (referralCode) {  // wrong need changes.
+  if (referralCode) {
+    // wrong need changes.
     const referred = await userModel.findOne({ referralCode });
     if (referred) {
       const expiryDate = new Date();
@@ -95,7 +90,7 @@ export const registerUserService = async ({
   return { email, firstName, lastName };
 };
 
-export const verifyEmailService = async ({ email, otp }) => {
+const verifyEmailService = async ({ email, otp }) => {
   const user = await userModel.findOne({ email: email });
   if (!user) {
     throw new AppError('User not found', STATUS_CODES.NOT_FOUND);
@@ -126,7 +121,7 @@ export const verifyEmailService = async ({ email, otp }) => {
   return true;
 };
 
-export const resendOtpService = async (email) => {
+const resendOtpService = async (email) => {
   const user = await userModel.findOne({ email: email });
   if (!user) {
     throw new AppError('User not found', STATUS_CODES.NOT_FOUND);
@@ -157,7 +152,7 @@ export const resendOtpService = async (email) => {
   });
 };
 
-export const userLoginService = async ({ email, password }) => {
+const userLoginService = async ({ email, password }) => {
   const user = await userModel.findOne({ email: email });
 
   if (!user) {
@@ -184,13 +179,13 @@ export const userLoginService = async ({ email, password }) => {
   return { accessToken, refreshToken, user };
 };
 
-export const googleAuthService = async (user) => {
+const googleAuthService = async (user) => {
   const accessToken = await generateAccessToken(user._id, 'User');
   const refreshToken = await generateRefreshToken(user._id, 'User');
   return { accessToken, refreshToken };
 };
 
-export const forgotPasswordServices = async (email) => {
+const forgotPasswordServices = async (email) => {
   const user = await userModel.findOne({ email: email });
   if (!user) {
     throw new AppError('User not found', STATUS_CODES.NOT_FOUND);
@@ -217,7 +212,7 @@ export const forgotPasswordServices = async (email) => {
   });
 };
 
-export const resetPasswordService = async (email, newPassword) => {
+const resetPasswordService = async (email, newPassword) => {
   const user = await userModel.findOne({ email: email });
   const userOtp = await OtpModel.findOne({ email });
   if (userOtp && !userOtp.isVerified) {
@@ -238,7 +233,7 @@ export const resetPasswordService = async (email, newPassword) => {
   await user.save();
 };
 
-export const refreshTokenService = async (token) => {
+const refreshTokenService = async (token) => {
   const verifyToken = await jwt.verify(token, process.env.JWT_REFRESH_KEY);
   if (!verifyToken) {
     throw new AppError('Token expired', STATUS_CODES.NOT_FOUND);
@@ -250,7 +245,7 @@ export const refreshTokenService = async (token) => {
   return { newAccessToken, refreshToken };
 };
 
-export const authMeService = async (userId) => {
+const authMeService = async (userId) => {
   const user = await userModel.findById(userId);
   if (!user) {
     throw new AppError('Please Login, User not found', STATUS_CODES.NOT_FOUND);
@@ -271,13 +266,13 @@ export const authMeService = async (userId) => {
   return obj;
 };
 
-export const facebookAuthService = async (user) => {
+const facebookAuthService = async (user) => {
   const accessToken = await generateAccessToken(user._id, 'User');
   const refreshToken = await generateRefreshToken(user._id, 'User');
   return { accessToken, refreshToken };
 };
 
-export const chatService = async (body, userId) => {
+const chatService = async (body, userId) => {
   const { query } = body;
 
   let contextData = '';
@@ -327,7 +322,7 @@ export const chatService = async (body, userId) => {
   return reply;
 };
 
-export const userImageUploadService = async (userId, image) => {
+const userImageUploadService = async (userId, image) => {
   const user = await userModel.findOne({ _id: userId });
   if (!user) throw new AppError('User not found', STATUS_CODES.NOT_FOUND);
   const imgUrl = user.image;
@@ -352,13 +347,13 @@ export const userImageUploadService = async (userId, image) => {
   return { _id: userId, image: user.image };
 };
 
-export const editUserService = async (userId, body) => {
+const editUserService = async (userId, body) => {
   const { name, email, mobile } = body;
   const updated = await userModel.findByIdAndUpdate(userId, { name, email, mobile });
   return updated;
 };
 
-export const emailChangeOtpService = async (userId, email) => {
+const emailChangeOtpService = async (userId, email) => {
   const isExist = await userModel.findOne({ email });
   if (isExist) {
     throw new AppError('User already exist in this email address', STATUS_CODES.NOT_FOUND);
@@ -385,7 +380,7 @@ export const emailChangeOtpService = async (userId, email) => {
   });
 };
 
-export const emailChangeResendOtpService = async (email, userId) => {
+const emailChangeResendOtpService = async (email, userId) => {
   const user = await userModel.findById(userId);
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   const userOtp = await OtpModel.findOne({ userId });
@@ -408,7 +403,7 @@ export const emailChangeResendOtpService = async (email, userId) => {
   });
 };
 
-export const emailChangeVerifyService = async (email, otp) => {
+const emailChangeVerifyService = async (email, otp) => {
   let userOtp = await OtpModel.findOne({ email });
   const isCodeValid = userOtp.otp == otp;
   const isNotExpired = userOtp.otp_expiry > new Date();
@@ -420,7 +415,7 @@ export const emailChangeVerifyService = async (email, otp) => {
   return true;
 };
 
-export const getUserChartDataService = async (query) => {
+const getUserChartDataService = async (query) => {
   const { type = 'daily', startDate, endDate, year, month } = query;
   const now = new Date();
   const firstDayOfWeek = new Date(now);
@@ -503,4 +498,24 @@ export const getUserChartDataService = async (query) => {
   }
   console.log(filled);
   return filled;
+};
+
+export {
+  registerUserService,
+  verifyEmailService,
+  resendOtpService,
+  userLoginService,
+  googleAuthService,
+  forgotPasswordServices,
+  resetPasswordService,
+  refreshTokenService,
+  authMeService,
+  facebookAuthService,
+  chatService,
+  userImageUploadService,
+  editUserService,
+  emailChangeOtpService,
+  emailChangeResendOtpService,
+  emailChangeVerifyService,
+  getUserChartDataService,
 };

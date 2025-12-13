@@ -8,7 +8,7 @@ import {
 } from '../services/categories.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const createCategory = async (req, res) => {
+const createCategory = async (req, res) => {
   const image = req.file;
   const category = await createCategoryService(image, req.body);
   if (!category) {
@@ -22,7 +22,7 @@ export const createCategory = async (req, res) => {
   });
 };
 
-export const getAllCategories = async (req, res) => {
+const getAllCategories = async (req, res) => {
   const query = req.query;
   let { categoryMap, rootTree: rootCategories } = await getCategoriesService(query);
   return res.status(STATUS_CODES.OK).json({
@@ -33,7 +33,7 @@ export const getAllCategories = async (req, res) => {
   });
 };
 
-export const updateCategory = async (req, res) => {
+const updateCategory = async (req, res) => {
   const image = req.file;
 
   const updated = await updateCategoryService(req.params.id, image, req.body);
@@ -48,7 +48,7 @@ export const updateCategory = async (req, res) => {
   });
 };
 
-export const getCategoriesByLevel = async (req, res) => {
+const getCategoriesByLevel = async (req, res) => {
   const level = req.params.level;
   const perPage = req?.query?.perPage;
   const page = req?.query?.page;
@@ -79,7 +79,7 @@ export const getCategoriesByLevel = async (req, res) => {
   }
 };
 
-export const blockCategory = async (req, res) => {
+const blockCategory = async (req, res) => {
   const id = req.params.id;
   const category = await blockCategoryService(id);
   return res.status(STATUS_CODES.OK).json({
@@ -91,3 +91,5 @@ export const blockCategory = async (req, res) => {
       : 'Category Unblocked Successfully',
   });
 };
+
+export { createCategory, getAllCategories, updateCategory, getCategoriesByLevel, blockCategory };

@@ -11,7 +11,7 @@ import walletModel from '../models/wallet.model.js';
 import walletTransactionsModel from '../models/walletTransactions.model.js';
 import PDFDocument from 'pdfkit';
 
-export const placeOrderService = async (userId, body) => {
+const placeOrderService = async (userId, body) => {
   const session = await mongoose.startSession();
   try {
     session.startTransaction();
@@ -96,7 +96,7 @@ export const placeOrderService = async (userId, body) => {
   }
 };
 
-export const getOrdersService = async (userId, page, perPage) => {
+const getOrdersService = async (userId, page, perPage) => {
   const result = await orderModel.aggregate([
     { $match: { userId: new mongoose.Types.ObjectId(userId) } },
     { $unwind: '$items' },
@@ -113,7 +113,7 @@ export const getOrdersService = async (userId, page, perPage) => {
   return { orders, totalPages, totalPosts };
 };
 
-export const getOrderItemByIdService = async (id) => {
+const getOrderItemByIdService = async (id) => {
   const order = await orderModel
     .findOne(
       {
@@ -127,7 +127,7 @@ export const getOrderItemByIdService = async (id) => {
   return { order, displayItem, relatedItems };
 };
 
-export const downloadInvoiceService = async (id, res) => {
+const downloadInvoiceService = async (id, res) => {
   const order = await orderModel.findOne(
     { 'items._id': id },
     {
@@ -307,7 +307,7 @@ export const downloadInvoiceService = async (id, res) => {
 
   doc.end();
 };
-export const getAdminOrdersService = async (page, perPage, query) => {
+const getAdminOrdersService = async (page, perPage, query) => {
   const filter = {};
   if (query.search) {
     filter.$or = [
@@ -360,12 +360,12 @@ export const getAdminOrdersService = async (page, perPage, query) => {
   return { orders, totalPosts };
 };
 
-export const getOrderItemsByOrderIdService = async (id) => {
+const getOrderItemsByOrderIdService = async (id) => {
   const order = await orderModel.findById(id).populate('items.product');
   return order;
 };
 
-export const getAdminOrdersByItemsService = async (query, page, perPage) => {
+const getAdminOrdersByItemsService = async (query, page, perPage) => {
   const filter = {};
   if (query.search) {
     filter.$or = [
@@ -465,7 +465,7 @@ export const getAdminOrdersByItemsService = async (query, page, perPage) => {
   return { orderItems, totalPosts };
 };
 
-export const updateOrderStatusService = async (id, status) => {
+const updateOrderStatusService = async (id, status) => {
   const order = await orderModel.findOne({ 'items._id': id });
 
   const item = order.items.id(id);
@@ -496,7 +496,7 @@ export const updateOrderStatusService = async (id, status) => {
   return order;
 };
 
-export const cancelOrderByUserService = async (id, reason) => {
+const cancelOrderByUserService = async (id, reason) => {
   const order = await orderModel.findOne({ 'items._id': id });
   const item = order.items.id(id);
 
@@ -524,7 +524,7 @@ export const cancelOrderByUserService = async (id, reason) => {
   return order;
 };
 
-export const returnRequestService = async (id, reason) => {
+const returnRequestService = async (id, reason) => {
   const order = await orderModel.findOne({ 'items._id': id });
   const item = order.items.id(id);
   item.status = 'Return Requested';
@@ -533,7 +533,7 @@ export const returnRequestService = async (id, reason) => {
   return order;
 };
 
-export const approveReturnRequest = async (id) => {
+const approveReturnRequest = async (id) => {
   const order = await orderModel.findOne({ 'items._id': id });
   const item = order.items.id(id);
   item.status = 'Return Approved';
@@ -557,7 +557,7 @@ export const approveReturnRequest = async (id) => {
   });
   return order;
 };
-export const rejectReturnRequest = async (id) => {
+const rejectReturnRequest = async (id) => {
   const order = await orderModel.findOne({ 'items._id': id });
   const item = order.items.id(id);
   item.status = 'Return Rejected';
@@ -565,7 +565,7 @@ export const rejectReturnRequest = async (id) => {
   return order;
 };
 
-export const getReturnRequests = async (page, perPage, query) => {
+const getReturnRequests = async (page, perPage, query) => {
   const filter = {};
   if (query.search) {
     filter.$or = [
@@ -593,7 +593,7 @@ export const getReturnRequests = async (page, perPage, query) => {
   return { orders, totalPosts };
 };
 
-export const AddReviewService = async (userId, id, body) => {
+const AddReviewService = async (userId, id, body) => {
   const order = await orderModel.findOne({ 'items._id': id });
   const item = order.items.id(id);
 
@@ -618,12 +618,12 @@ export const AddReviewService = async (userId, id, body) => {
   return review;
 };
 
-export const getReviewsService = async (id) => {
+const getReviewsService = async (id) => {
   const reviews = await reviewModel.find({ product: id }).populate('user');
   return reviews;
 };
 
-export const getSalesReportService = async (filter, startDate, endDate, year, month) => {
+const getSalesReportService = async (filter, startDate, endDate, year, month) => {
   const match = {};
   const now = new Date();
   const firstDayOfWeek = new Date(now);
@@ -703,7 +703,7 @@ export const getSalesReportService = async (filter, startDate, endDate, year, mo
   };
 };
 
-export const getSalesReportOrdersService = async (filter, startDate, endDate, year, month) => {
+const getSalesReportOrdersService = async (filter, startDate, endDate, year, month) => {
   const match = { orderStatus: { $ne: 'Failed' } };
   const now = new Date();
   const firstDayOfWeek = new Date(now);
@@ -745,7 +745,7 @@ export const getSalesReportOrdersService = async (filter, startDate, endDate, ye
   return result;
 };
 
-export const orderWithWalletService = async (userId, body) => {
+const orderWithWalletService = async (userId, body) => {
   const amount = body.prices.total;
   const items = body.items;
   for (let item of items) {
@@ -790,12 +790,12 @@ export const orderWithWalletService = async (userId, body) => {
   return order;
 };
 
-export const getFailedOrderService = async (id) => {
+const getFailedOrderService = async (id) => {
   const order = await orderModel.findById(id);
   return order;
 };
 
-export const retryFailedOrderService = async (userId, id, payment) => {
+const retryFailedOrderService = async (userId, id, payment) => {
   const order = await orderModel.findById(id);
 
   for (let item of order.items) {
@@ -834,7 +834,7 @@ export const retryFailedOrderService = async (userId, id, payment) => {
   return order;
 };
 
-export const retryFailedOrderWithWalletService = async (userId, body) => {
+const retryFailedOrderWithWalletService = async (userId, body) => {
   const { id, amount, items } = body;
   const wallet = await walletModel.findOne({ userId });
   if (wallet.balance < amount) {
@@ -879,7 +879,7 @@ export const retryFailedOrderWithWalletService = async (userId, body) => {
   return order;
 };
 
-export const getTopSellingProductsService = async (
+const getTopSellingProductsService = async (
   page,
   perPage,
   filter,
@@ -971,7 +971,7 @@ export const getTopSellingProductsService = async (
   return { products, totalPosts };
 };
 
-export const getTopSellingCategoriesService = async (
+const getTopSellingCategoriesService = async (
   page,
   perPage,
   filter,
@@ -1062,7 +1062,7 @@ export const getTopSellingCategoriesService = async (
   return { categories, totalPosts };
 };
 
-export const getTopSellingBrandsService = async (
+const getTopSellingBrandsService = async (
   page,
   perPage,
   filter,
@@ -1145,7 +1145,7 @@ export const getTopSellingBrandsService = async (
   return { brands, totalPosts };
 };
 
-export const getRevenueChartDataService = async (query) => {
+const getRevenueChartDataService = async (query) => {
   const { type = 'daily', startDate, endDate, year, month } = query;
   const now = new Date();
   const firstDayOfWeek = new Date(now);
@@ -1228,7 +1228,7 @@ export const getRevenueChartDataService = async (query) => {
   return filled;
 };
 
-export const getSalesChartDataService = async (query) => {
+const getSalesChartDataService = async (query) => {
   const { type = 'daily', startDate, endDate, year, month } = query;
   const now = new Date();
   const firstDayOfWeek = new Date(now);
@@ -1311,7 +1311,7 @@ export const getSalesChartDataService = async (query) => {
   return filled;
 };
 
-export const getOrdersStatusChartDataService = async (query) => {
+const getOrdersStatusChartDataService = async (query) => {
   const { type = 'daily', startDate, endDate, year, month } = query;
   const now = new Date();
   const firstDayOfWeek = new Date(now);
@@ -1380,4 +1380,34 @@ export const getOrdersStatusChartDataService = async (query) => {
     }
   }
   return filled;
+};
+
+export {
+  placeOrderService,
+  getOrdersService,
+  getOrderItemByIdService,
+  downloadInvoiceService,
+  getAdminOrdersService,
+  getOrderItemsByOrderIdService,
+  getAdminOrdersByItemsService,
+  updateOrderStatusService,
+  cancelOrderByUserService,
+  returnRequestService,
+  approveReturnRequest,
+  rejectReturnRequest,
+  getReturnRequests,
+  AddReviewService,
+  getReviewsService,
+  getSalesReportService,
+  getSalesReportOrdersService,
+  orderWithWalletService,
+  getFailedOrderService,
+  retryFailedOrderService,
+  retryFailedOrderWithWalletService,
+  getTopSellingProductsService,
+  getTopSellingCategoriesService,
+  getTopSellingBrandsService,
+  getRevenueChartDataService,
+  getSalesChartDataService,
+  getOrdersStatusChartDataService,
 };

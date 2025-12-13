@@ -19,7 +19,7 @@ cloudinary.config({
   secure: true,
 });
 
-export const addProductsController = async (req, res) => {
+const addProductsController = async (req, res) => {
   const { body, files } = req;
   const imagesByVariant = [];
   files.forEach((file) => {
@@ -42,7 +42,7 @@ export const addProductsController = async (req, res) => {
   });
 };
 
-export const getAllProductsController = async (req, res) => {
+const getAllProductsController = async (req, res) => {
   const page = parseInt(req.query.page);
   const perPage = parseInt(req.query.perPage);
   const { totalPages, products, totalPosts } = await getAllProductsService(
@@ -60,7 +60,7 @@ export const getAllProductsController = async (req, res) => {
   });
 };
 
-export const updateProductController = async (req, res) => {
+const updateProductController = async (req, res) => {
   const id = req.params.id;
   const body = req.body;
   const product = await updateProductService(id, body);
@@ -71,7 +71,7 @@ export const updateProductController = async (req, res) => {
   });
 };
 
-export const unlistProductController = async (req, res) => {
+const unlistProductController = async (req, res) => {
   const id = req.params.id;
   const product = await unlistProductService(id);
   return res.status(STATUS_CODES.OK).json({
@@ -81,7 +81,7 @@ export const unlistProductController = async (req, res) => {
   });
 };
 
-export const getVariantsController = async (req, res) => {
+const getVariantsController = async (req, res) => {
   const id = req.params.id;
   const query = req.query;
   const { variants, page, perPage, totalPages, totalPosts } = await getVariantsService(id, query);
@@ -96,7 +96,7 @@ export const getVariantsController = async (req, res) => {
   });
 };
 
-export const getProductByIdController = async (req, res) => {
+const getProductByIdController = async (req, res) => {
   const id = req.params.id;
   const { groupedVariants, product } = await getProductByIdService(id);
   return res.status(STATUS_CODES.OK).json({
@@ -109,7 +109,7 @@ export const getProductByIdController = async (req, res) => {
   });
 };
 
-export const unlistVariantController = async (req, res) => {
+const unlistVariantController = async (req, res) => {
   const id = req.params.id;
   const variant = await unlistVariantService(id);
   return res.status(STATUS_CODES.OK).json({
@@ -119,7 +119,7 @@ export const unlistVariantController = async (req, res) => {
   });
 };
 
-export const editVariantController = async (req, res) => {
+const editVariantController = async (req, res) => {
   const id = req.params.id;
   const images = req.files;
   const variant = await editVariantService(id, req.body, images);
@@ -131,7 +131,7 @@ export const editVariantController = async (req, res) => {
   });
 };
 
-export const addVariantController = async (req, res) => {
+const addVariantController = async (req, res) => {
   const id = req.params.id;
   const variant = await addVariantService(id, req.body, req.files);
   return res.status(STATUS_CODES.OK).json({
@@ -142,7 +142,7 @@ export const addVariantController = async (req, res) => {
   });
 };
 
-export const getSearchSuggestions = async (req, res) => {
+const getSearchSuggestions = async (req, res) => {
   const { q } = req.query;
   const { categories, products } = await getSearchSuggestionsService(q);
   return res.status(STATUS_CODES.OK).json({
@@ -151,4 +151,17 @@ export const getSearchSuggestions = async (req, res) => {
     categories,
     products,
   });
+};
+
+export {
+  addProductsController,
+  getAllProductsController,
+  updateProductController,
+  unlistProductController,
+  getVariantsController,
+  getProductByIdController,
+  unlistVariantController,
+  editVariantController,
+  addVariantController,
+  getSearchSuggestions,
 };

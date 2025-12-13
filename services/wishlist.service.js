@@ -2,7 +2,7 @@ import AppError from '../middlewares/Error/appError.js';
 import wishlistModal from '../models/wishlist.model.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 
-export const addToWishlistService = async (userId, body) => {
+const addToWishlistService = async (userId, body) => {
   const isExist = await wishlistModal.find({
     user: userId,
     product: body.product,
@@ -19,7 +19,7 @@ export const addToWishlistService = async (userId, body) => {
   return item;
 };
 
-export const getWishlistService = async (userId) => {
+const getWishlistService = async (userId) => {
   const wishlist = await wishlistModal
     .find({ user: userId })
     .populate('product')
@@ -33,8 +33,10 @@ export const getWishlistService = async (userId) => {
   return items;
 };
 
-export const removeFromWishlist = async (id) => {
+const removeFromWishlist = async (id) => {
   const wishlist = await wishlistModal.findByIdAndDelete(id);
   console.log(wishlist);
   return wishlist;
 };
+
+export { addToWishlistService, getWishlistService, removeFromWishlist };

@@ -1,9 +1,9 @@
 import { Server } from 'socket.io';
 
-export const onlineUsers = new Map();
+const onlineUsers = new Map();
 let ioInstance = null;
 
-export const SocketInit = (server) => {
+const SocketInit = (server) => {
   ioInstance = new Server(server, {
     cors: {
       origin: process.env.FRONTEND_URL,
@@ -34,9 +34,11 @@ export const SocketInit = (server) => {
   return ioInstance;
 };
 
-export const getIO = () => {
+const getIO = () => {
   if (!ioInstance) {
     throw new Error('Socket is not initialized!');
   }
   return ioInstance;
 };
+
+export { onlineUsers, SocketInit, getIO };

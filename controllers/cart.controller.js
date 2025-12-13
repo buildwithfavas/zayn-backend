@@ -7,7 +7,7 @@ import {
 } from '../services/cart.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const addToCart = async (req, res) => {
+const addToCart = async (req, res) => {
   const userId = req.userId;
   const body = req.body;
   const cartItem = await addToCartService(userId, body);
@@ -18,7 +18,7 @@ export const addToCart = async (req, res) => {
   });
 };
 
-export const removeFromCart = async (req, res) => {
+const removeFromCart = async (req, res) => {
   const id = req.params.id;
   const item = await removeFromCartService(id);
   res.status(STATUS_CODES.OK).json({
@@ -28,7 +28,7 @@ export const removeFromCart = async (req, res) => {
   });
 };
 
-export const editItemCount = async (req, res) => {
+const editItemCount = async (req, res) => {
   const id = req.params.id;
   const mode = req.query.mode;
   const item = await editItemCountService(id, mode);
@@ -40,7 +40,7 @@ export const editItemCount = async (req, res) => {
   });
 };
 
-export const getCartItems = async (req, res) => {
+const getCartItems = async (req, res) => {
   const userId = req.userId;
   const items = await getCartItemsService(userId);
   res.status(STATUS_CODES.OK).json({
@@ -50,7 +50,7 @@ export const getCartItems = async (req, res) => {
   });
 };
 
-export const productValidation = async (req, res) => {
+const productValidation = async (req, res) => {
   const body = req.body;
   const status = await productValidationService(body);
   res.status(STATUS_CODES.OK).json({
@@ -59,3 +59,5 @@ export const productValidation = async (req, res) => {
     status,
   });
 };
+
+export { addToCart, removeFromCart, editItemCount, getCartItems, productValidation };

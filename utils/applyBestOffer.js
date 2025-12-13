@@ -1,7 +1,7 @@
 import offerModel from '../models/offers.model.js';
 import productModel from '../models/product.model.js';
 
-export const applyBestOffer = async (variant) => {
+const applyBestOffer = async (variant) => {
   const product = await productModel.findById(variant.productId);
   const offers = await offerModel.find({
     isActive: true,
@@ -31,3 +31,5 @@ export const applyBestOffer = async (variant) => {
   }
   return variant;
 };
+
+export { applyBestOffer };

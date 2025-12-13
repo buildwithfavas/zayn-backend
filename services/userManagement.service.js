@@ -5,7 +5,7 @@ import accountBlockedMailTemplate from '../utils/templates/blockUserTemplate.js'
 import { getSignedImageUrl } from '../utils/getImageFromCloudinary.js';
 import accountUnblockedMailTemplate from '../utils/templates/unblockEmailTemplate.js';
 
-export const getUsersService = async (query) => {
+const getUsersService = async (query) => {
   const page = query.page;
   const perPage = query.perPage;
   let filter = {};
@@ -34,7 +34,7 @@ export const getUsersService = async (query) => {
   return { allUsers, totalPosts };
 };
 
-export const blockUserService = async (userId) => {
+const blockUserService = async (userId) => {
   const user = await userModel.findByIdAndUpdate(
     userId,
     [{ $set: { isBlocked: { $not: '$isBlocked' } } }],
@@ -62,3 +62,5 @@ export const blockUserService = async (userId) => {
   }
   return user;
 };
+
+export { getUsersService, blockUserService };

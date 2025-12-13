@@ -6,7 +6,7 @@ import {
   refreshTokenService,
 } from '../services/admin.service.js';
 
-export const adminLoginController = async (req, res) => {
+const adminLoginController = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     throw new AppError('Email and password are required', STATUS_CODES.BAD_REQUEST);
@@ -28,7 +28,7 @@ export const adminLoginController = async (req, res) => {
     admin,
   });
 };
-export const refreshToken = async (req, res) => {
+const refreshToken = async (req, res) => {
   const token = req.cookies.admin_refreshToken;
   if (!token) {
     throw new AppError('Please provide token', STATUS_CODES.UNAUTHORIZED);
@@ -52,13 +52,13 @@ export const refreshToken = async (req, res) => {
   });
 };
 
-export const authAdminController = async (req, res) => {
+const authAdminController = async (req, res) => {
   const adminId = req.adminId;
   const user = await authAdminService(adminId);
   res.status(STATUS_CODES.OK).json({ user });
 };
 
-export const adminLogoutController = async (req, res) => {
+const adminLogoutController = async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const cookieOption = {
     httpOnly: true,
@@ -73,3 +73,5 @@ export const adminLogoutController = async (req, res) => {
     success: true,
   });
 };
+
+export { adminLoginController, refreshToken, authAdminController, adminLogoutController };

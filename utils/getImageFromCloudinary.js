@@ -7,7 +7,7 @@ cloudinary.config({
   secure: true,
 });
 
-export const getSignedImageUrl = (publicId) => {
+const getSignedImageUrl = (publicId) => {
   if (!publicId) return null;
   return cloudinary.url(publicId, {
     type: 'authenticated',
@@ -15,3 +15,5 @@ export const getSignedImageUrl = (publicId) => {
     expires_at: Math.floor(Date.now() / 1000) + 300,
   });
 };
+
+export { getSignedImageUrl };

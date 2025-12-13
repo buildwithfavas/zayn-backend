@@ -5,7 +5,7 @@ import {
 } from '../services/wishlist.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const addToWishlistController = async (req, res) => {
+const addToWishlistController = async (req, res) => {
   const userId = req.userId;
   const item = await addToWishlistService(userId, req.body);
   res.status(STATUS_CODES.OK).json({
@@ -15,7 +15,7 @@ export const addToWishlistController = async (req, res) => {
   });
 };
 
-export const getWishlistController = async (req, res) => {
+const getWishlistController = async (req, res) => {
   const userId = req.userId;
   const wishlist = await getWishlistService(userId);
   res.status(STATUS_CODES.OK).json({
@@ -25,7 +25,7 @@ export const getWishlistController = async (req, res) => {
   });
 };
 
-export const removeFormWishlistController = async (req, res) => {
+const removeFormWishlistController = async (req, res) => {
   const id = req.params.id;
   const item = await removeFromWishlist(id);
   res.status(STATUS_CODES.OK).json({
@@ -34,3 +34,5 @@ export const removeFormWishlistController = async (req, res) => {
     item,
   });
 };
+
+export { addToWishlistController, getWishlistController, removeFormWishlistController };

@@ -1,6 +1,6 @@
 import { body } from 'express-validator';
 
-export const signupValidation = [
+const signupValidation = [
   body('firstName')
     .notEmpty()
     .withMessage('First Name is required')
@@ -35,12 +35,16 @@ export const signupValidation = [
   body('password')
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage(
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-    )
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters')
+    .matches(/(?=.*[a-z])/)
+    .withMessage('Password must contain at least one lowercase letter')
+    .matches(/(?=.*[A-Z])/)
+    .withMessage('Password must contain at least one uppercase letter')
+    .matches(/(?=.*\d)/)
+    .withMessage('Password must contain at least one number')
+    .matches(/(?=.*[^A-Za-z0-9])/)
+    .withMessage('Password must contain at least one special character')
     .custom((value) => {
       if (value.trim().length === 0) {
         throw new Error('Password cannot be only spaces');
@@ -49,7 +53,7 @@ export const signupValidation = [
     }),
 ];
 
-export const loginValidation = [
+const loginValidation = [
   body('email')
     .notEmpty()
     .withMessage('Email is required')
@@ -69,16 +73,20 @@ export const loginValidation = [
     }),
 ];
 
-export const resetPassValidation = [
+const resetPassValidation = [
   body('newPassword')
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 8 })
-    .withMessage('Password must be at least 8 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-    .withMessage(
-      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
-    )
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters')
+    .matches(/(?=.*[a-z])/)
+    .withMessage('Password must contain at least one lowercase letter')
+    .matches(/(?=.*[A-Z])/)
+    .withMessage('Password must contain at least one uppercase letter')
+    .matches(/(?=.*\d)/)
+    .withMessage('Password must contain at least one number')
+    .matches(/(?=.*[^A-Za-z0-9])/)
+    .withMessage('Password must contain at least one special character')
     .custom((value) => {
       if (value.trim().length === 0) {
         throw new Error('Password cannot be only spaces');
@@ -96,7 +104,7 @@ export const resetPassValidation = [
     }),
 ];
 
-export const productValidation = [
+const productValidation = [
   body('name')
     .isString()
     .withMessage('Product name must be a string.')
@@ -165,7 +173,7 @@ export const productValidation = [
     .toInt(),
 ];
 
-export const editProductValidation = [
+const editProductValidation = [
   body('name')
     .isString()
     .withMessage('Product name must be a string.')
@@ -207,3 +215,11 @@ export const editProductValidation = [
 
   body('isFeatured').isString().withMessage('isFeatured must be true or false.').toBoolean(),
 ];
+
+export {
+  signupValidation,
+  loginValidation,
+  resetPassValidation,
+  productValidation,
+  editProductValidation,
+};

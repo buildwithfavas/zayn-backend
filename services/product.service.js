@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import Razorpay from 'razorpay';
-export const addProductService = async (body, imagesByVariant) => {
+const addProductService = async (body, imagesByVariant) => {
   const { name, description, brand, category, subCategory, thirdCategory, variants, isFeatured } =
     body;
   let catId = await categoryModel.findOne({ name: category });
@@ -59,7 +59,7 @@ export const addProductService = async (body, imagesByVariant) => {
   return { newProduct, variantDocs };
 };
 
-export const getAllProductsService = async (query, page, perPage) => {
+const getAllProductsService = async (query, page, perPage) => {
   let filter = {};
   if (!query.admin && query.admin !== 'true') {
     filter.isUnlisted = false;
@@ -323,7 +323,7 @@ export const getAllProductsService = async (query, page, perPage) => {
   return { products };
 };
 
-export const updateProductService = async (id, body) => {
+const updateProductService = async (id, body) => {
   const product = await productModel.findById(id);
   const { name, description, brand, isFeatured, category, subCategory, thirdCategory } = body;
   console.log(body);
@@ -342,7 +342,7 @@ export const updateProductService = async (id, body) => {
   await product.save();
 };
 
-export const unlistProductService = async (id) => {
+const unlistProductService = async (id) => {
   const product = await productModel.findByIdAndUpdate(
     id,
     [{ $set: { isUnlisted: { $not: '$isUnlisted' } } }],
@@ -351,7 +351,7 @@ export const unlistProductService = async (id) => {
   return product;
 };
 
-export const getVariantsService = async (id, query) => {
+const getVariantsService = async (id, query) => {
   const page = query.page;
   const perPage = query.perPage;
   const totalPosts = await variantModel.countDocuments({ productId: id });
@@ -364,7 +364,7 @@ export const getVariantsService = async (id, query) => {
   return { variants, totalPages, page, perPage, totalPosts };
 };
 
-export const getProductByIdService = async (id) => {
+const getProductByIdService = async (id) => {
   let pipeline = [
     { $match: { _id: new mongoose.Types.ObjectId(id), isUnlisted: false } },
     {
@@ -507,7 +507,7 @@ export const getProductByIdService = async (id) => {
   return { groupedVariants, product };
 };
 
-export const unlistVariantService = async (id) => {
+const unlistVariantService = async (id) => {
   const variant = await variantModel.findByIdAndUpdate(
     id,
     [{ $set: { isUnlisted: { $not: '$isUnlisted' } } }],
@@ -516,7 +516,7 @@ export const unlistVariantService = async (id) => {
   return variant;
 };
 
-export const editVariantService = async (id, body, imageFiles) => {
+const editVariantService = async (id, body, imageFiles) => {
   const variant = await variantModel.findById(id);
   const { stock, size, color, price, oldPrice, images = [] } = body;
 
@@ -554,7 +554,7 @@ export const editVariantService = async (id, body, imageFiles) => {
   return updatedVariant;
 };
 
-export const addVariantService = async (id, body, files) => {
+const addVariantService = async (id, body, files) => {
   const { stock, size, color, price, oldPrice } = body;
   let imageArr = [];
   if (files) {
@@ -584,7 +584,7 @@ export const addVariantService = async (id, body, files) => {
   return variant;
 };
 
-export const getSearchSuggestionsService = async (q) => {
+const getSearchSuggestionsService = async (q) => {
   if (!q) return { products: [], categories: [] };
 
   const products = await productModel
@@ -618,7 +618,7 @@ export const getSearchSuggestionsService = async (q) => {
   return { products, categories };
 };
 
-export const createRazorpayOrderService = async ({ amount, items, failed = false }) => {
+const createRazorpayOrderService = async ({ amount, items, failed = false }) => {
   const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_TEST_KEY_ID,
     key_secret: process.env.RAZORPAY_TEST_KEY_SECRET,
@@ -682,4 +682,18 @@ export const createRazorpayOrderService = async ({ amount, items, failed = false
   };
   const order = await razorpay.orders.create(options);
   return order;
+};
+
+export {
+  addProductService,
+  getAllProductsService,
+  updateProductService,
+  unlistProductService,
+  getVariantsService,
+  getProductByIdService,
+  unlistVariantService,
+  editVariantService,
+  addVariantService,
+  getSearchSuggestionsService,
+  createRazorpayOrderService,
 };

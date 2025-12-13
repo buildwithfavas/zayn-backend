@@ -20,7 +20,7 @@ import {
 } from '../services/user.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export async function registerUser(req, res) {
+const registerUser = async (req, res) => {
   const { firstName, lastName, email, password, referralCode } = req.body;
   if (!firstName || !lastName || !email || !password) {
     throw new AppError(
@@ -34,9 +34,9 @@ export async function registerUser(req, res) {
     message: 'User registered successfully , please verify your email',
     user,
   });
-}
+};
 
-export const verifyEmailController = async (req, res) => {
+const verifyEmailController = async (req, res) => {
   const { email, otp } = req.body;
   if (!email || !otp) {
     throw new AppError('Provide email and otp', STATUS_CODES.BAD_REQUEST);
@@ -48,7 +48,8 @@ export const verifyEmailController = async (req, res) => {
     message: 'email verified successfully',
   });
 };
-export const resendOtp = async (req, res) => {
+
+const resendOtp = async (req, res) => {
   const { email } = req.body;
   await resendOtpService(email);
   return res.status(STATUS_CODES.OK).json({
@@ -57,7 +58,8 @@ export const resendOtp = async (req, res) => {
     message: 'OTP Resend successfully ',
   });
 };
-export const loginController = async (req, res) => {
+
+const loginController = async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     throw new AppError('Email and password are required', STATUS_CODES.BAD_REQUEST);
@@ -81,7 +83,7 @@ export const loginController = async (req, res) => {
   });
 };
 
-export const googleAuth = async (req, res) => {
+const googleAuth = async (req, res) => {
   const user = req.user;
   if (!user) {
     throw new AppError('Google authentication failed', STATUS_CODES.NOT_FOUND);
@@ -98,7 +100,8 @@ export const googleAuth = async (req, res) => {
   res.cookie('refreshToken', refreshToken, cookieOption);
   return res.redirect(process.env.FRONTEND_URL + '/');
 };
-export const facebookAuth = async (req, res) => {
+
+const facebookAuth = async (req, res) => {
   const user = req.user;
   if (!user) {
     throw new AppError('Facebook authentication failed', STATUS_CODES.NOT_FOUND);
@@ -118,7 +121,7 @@ export const facebookAuth = async (req, res) => {
   return res.redirect(process.env.FRONTEND_URL + '/');
 };
 
-export const logoutController = async (req, res) => {
+const logoutController = async (req, res) => {
   const isProduction = process.env.NODE_ENV === 'production';
   const cookieOption = {
     httpOnly: true,
@@ -134,7 +137,7 @@ export const logoutController = async (req, res) => {
   });
 };
 
-export const forgotPassword = async (req, res) => {
+const forgotPassword = async (req, res) => {
   const { email } = req.body;
   if (!email) {
     throw new AppError('Please enter email', STATUS_CODES.BAD_REQUEST);
@@ -147,7 +150,7 @@ export const forgotPassword = async (req, res) => {
   });
 };
 
-export const resetPassword = async (req, res) => {
+const resetPassword = async (req, res) => {
   const { email, newPassword, confirmPassword } = req.body;
   console.log(req.body);
   if (!email || !newPassword || !confirmPassword) {
@@ -159,7 +162,7 @@ export const resetPassword = async (req, res) => {
       STATUS_CODES.BAD_REQUEST
     );
   }
-  await resetPasswordService(email, newPassword );
+  await resetPasswordService(email, newPassword);
   return res.status(STATUS_CODES.OK).json({
     message: 'password updated successfully',
     success: true,
@@ -167,7 +170,7 @@ export const resetPassword = async (req, res) => {
   });
 };
 
-export const refreshToken = async (req, res) => {
+const refreshToken = async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) {
     throw new AppError('Please provide token', STATUS_CODES.UNAUTHORIZED);
@@ -192,13 +195,13 @@ export const refreshToken = async (req, res) => {
   });
 };
 
-export const authMe = async (req, res) => {
+const authMe = async (req, res) => {
   const userId = req.userId;
   const user = await authMeService(userId);
   res.status(STATUS_CODES.OK).json({ user });
 };
 
-export const chatController = async (req, res) => {
+const chatController = async (req, res) => {
   const userId = req?.userId;
   const reply = await chatService(req.body, userId);
   return res.status(STATUS_CODES.OK).json({
@@ -208,7 +211,7 @@ export const chatController = async (req, res) => {
   });
 };
 
-export const userImageController = async (req, res) => {
+const userImageController = async (req, res) => {
   const userId = req.userId;
   const image = req.file;
   if (!image) {
@@ -218,7 +221,7 @@ export const userImageController = async (req, res) => {
   return res.status(STATUS_CODES.OK).json(result);
 };
 
-export const editUser = async (req, res) => {
+const editUser = async (req, res) => {
   const userId = req.userId;
   const updated = editUserService(userId, req.body);
   return res.status(200).json({
@@ -228,7 +231,7 @@ export const editUser = async (req, res) => {
   });
 };
 
-export const emailChangeOtpController = async (req, res) => {
+const emailChangeOtpController = async (req, res) => {
   const userId = req.userId;
   const email = req.body.email;
   await emailChangeOtpService(userId, email);
@@ -239,7 +242,7 @@ export const emailChangeOtpController = async (req, res) => {
   });
 };
 
-export const emailChangeOtpResend = async (req, res) => {
+const emailChangeOtpResend = async (req, res) => {
   const userId = req.userId;
   const email = req.body.email;
   console.log(email);
@@ -251,7 +254,7 @@ export const emailChangeOtpResend = async (req, res) => {
   });
 };
 
-export const emailChangeVerifyController = async (req, res) => {
+const emailChangeVerifyController = async (req, res) => {
   const email = req.body.email;
   const otp = req.body.otp;
   await emailChangeVerifyService(email, otp);
@@ -262,7 +265,28 @@ export const emailChangeVerifyController = async (req, res) => {
   });
 };
 
-export const getUserChartData = async (req, res) => {
+const getUserChartData = async (req, res) => {
   const data = await getUserChartDataService(req.query);
   return res.status(200).json({ success: true, error: false, data });
+};
+
+export {
+  registerUser,
+  verifyEmailController,
+  resendOtp,
+  loginController,
+  googleAuth,
+  facebookAuth,
+  logoutController,
+  forgotPassword,
+  resetPassword,
+  refreshToken,
+  authMe,
+  chatController,
+  userImageController,
+  editUser,
+  emailChangeOtpController,
+  emailChangeOtpResend,
+  emailChangeVerifyController,
+  getUserChartData,
 };

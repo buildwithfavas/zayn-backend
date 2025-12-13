@@ -42,7 +42,7 @@ paypal.configure({
   client_secret: process.env.PAYPAL_CLIENT_SECRET,
 });
 
-export const placeOrder = async (req, res) => {
+const placeOrder = async (req, res) => {
   const userId = req.userId;
   const body = req.body;
   const order = await placeOrderService(userId, body);
@@ -53,7 +53,7 @@ export const placeOrder = async (req, res) => {
   });
 };
 
-export const getOrders = async (req, res) => {
+const getOrders = async (req, res) => {
   const page = parseInt(req.query.page);
   const perPage = parseInt(req.query.perPage);
   const userId = req.userId;
@@ -69,7 +69,7 @@ export const getOrders = async (req, res) => {
   });
 };
 
-export const getOrderItemById = async (req, res) => {
+const getOrderItemById = async (req, res) => {
   const id = req.params.id;
   const { order, displayItem, relatedItems } = await getOrderItemByIdService(id);
   res.status(STATUS_CODES.OK).json({
@@ -81,12 +81,12 @@ export const getOrderItemById = async (req, res) => {
   });
 };
 
-export const downloadInvoice = async (req, res) => {
+const downloadInvoice = async (req, res) => {
   const id = req.params.id;
   await downloadInvoiceService(id, res);
 };
 
-export const getAdminOrdersController = async (req, res) => {
+const getAdminOrdersController = async (req, res) => {
   const page = parseInt(req.query.page);
   const perPage = parseInt(req.query.perPage);
   const query = req.query;
@@ -101,7 +101,7 @@ export const getAdminOrdersController = async (req, res) => {
   });
 };
 
-export const getOrderItemsByOrderId = async (req, res) => {
+const getOrderItemsByOrderId = async (req, res) => {
   const id = req.params.id;
   const order = await getOrderItemsByOrderIdService(id);
   res.status(STATUS_CODES.OK).json({
@@ -111,7 +111,7 @@ export const getOrderItemsByOrderId = async (req, res) => {
   });
 };
 
-export const updateOrderStatus = async (req, res) => {
+const updateOrderStatus = async (req, res) => {
   const id = req.params.id;
   const status = req.body.status;
   const order = await updateOrderStatusService(id, status);
@@ -122,7 +122,7 @@ export const updateOrderStatus = async (req, res) => {
   });
 };
 
-export const getAdminOrdersByItems = async (req, res) => {
+const getAdminOrdersByItems = async (req, res) => {
   const page = parseInt(req.query.page);
   const perPage = parseInt(req.query.perPage);
   const { orderItems, totalPosts } = await getAdminOrdersByItemsService(req.query, page, perPage);
@@ -136,7 +136,7 @@ export const getAdminOrdersByItems = async (req, res) => {
   });
 };
 
-export const cancelOrderByUser = async (req, res) => {
+const cancelOrderByUser = async (req, res) => {
   const id = req.params.id;
   const reason = req.body.reason;
   const order = await cancelOrderByUserService(id, reason);
@@ -147,7 +147,7 @@ export const cancelOrderByUser = async (req, res) => {
   });
 };
 
-export const returnRequestController = async (req, res) => {
+const returnRequestController = async (req, res) => {
   const id = req.params.id;
   const reason = req.body.reason;
   const order = await returnRequestService(id, reason);
@@ -158,7 +158,7 @@ export const returnRequestController = async (req, res) => {
   });
 };
 
-export const approveReturnRequestController = async (req, res) => {
+const approveReturnRequestController = async (req, res) => {
   const id = req.params.id;
   const order = await approveReturnRequest(id);
   res.status(STATUS_CODES.OK).json({
@@ -167,7 +167,7 @@ export const approveReturnRequestController = async (req, res) => {
     order,
   });
 };
-export const rejectReturnRequestController = async (req, res) => {
+const rejectReturnRequestController = async (req, res) => {
   const id = req.params.id;
   const order = await rejectReturnRequest(id);
   res.status(STATUS_CODES.OK).json({
@@ -177,7 +177,7 @@ export const rejectReturnRequestController = async (req, res) => {
   });
 };
 
-export const getReturnRequestsController = async (req, res) => {
+const getReturnRequestsController = async (req, res) => {
   const page = parseInt(req.query.page);
   const perPage = parseInt(req.query.perPage);
   const { orders, totalPosts } = await getReturnRequests(page, perPage, req.query);
@@ -191,7 +191,7 @@ export const getReturnRequestsController = async (req, res) => {
   });
 };
 
-export const AddReviewController = async (req, res) => {
+const AddReviewController = async (req, res) => {
   const userId = req.userId;
   const id = req.params.id;
   const product = await AddReviewService(userId, id, req.body);
@@ -202,7 +202,7 @@ export const AddReviewController = async (req, res) => {
   });
 };
 
-export const getReviewsOController = async (req, res) => {
+const getReviewsOController = async (req, res) => {
   const id = req.params.id;
   const reviews = await getReviewsService(id);
   res.status(STATUS_CODES.OK).json({
@@ -212,7 +212,7 @@ export const getReviewsOController = async (req, res) => {
   });
 };
 
-export const getSalesReportController = async (req, res) => {
+const getSalesReportController = async (req, res) => {
   const filter = req.query.type;
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
@@ -246,7 +246,7 @@ export const getSalesReportController = async (req, res) => {
   });
 };
 
-export const downloadSalesReportExcel = async (req, res) => {
+const downloadSalesReportExcel = async (req, res) => {
   const { type, startDate, endDate, year, month } = req.query;
   const orders = await getSalesReportOrdersService(type, startDate, endDate, year, month);
   const reportData = await getSalesReportService(type, startDate, endDate, year, month);
@@ -379,7 +379,7 @@ export const downloadSalesReportExcel = async (req, res) => {
   });
 };
 
-export const downloadSalesReportPDF = async (req, res) => {
+const downloadSalesReportPDF = async (req, res) => {
   const { type, startDate, endDate, year, month } = req.query;
 
   const reportData = await getSalesReportService(type, startDate, endDate, year, month);
@@ -600,7 +600,7 @@ export const downloadSalesReportPDF = async (req, res) => {
   });
 };
 
-export const createRazorpayOrder = async (req, res) => {
+const createRazorpayOrder = async (req, res) => {
   console.log(req.body);
   const order = await createRazorpayOrderService(req.body);
 
@@ -610,7 +610,7 @@ export const createRazorpayOrder = async (req, res) => {
     order,
   });
 };
-export const verifyRazorpayPayment = async (req, res) => {
+const verifyRazorpayPayment = async (req, res) => {
   const userId = req.userId;
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, payload } = req.body;
   console.log(payload);
@@ -664,7 +664,7 @@ export const verifyRazorpayPayment = async (req, res) => {
   });
 };
 
-export const orderWithWallet = async (req, res) => {
+const orderWithWallet = async (req, res) => {
   const userId = req.userId;
   const body = req.body;
   const order = await orderWithWalletService(userId, body);
@@ -675,7 +675,7 @@ export const orderWithWallet = async (req, res) => {
   });
 };
 
-export const createPaypalPayment = async (req, res) => {
+const createPaypalPayment = async (req, res) => {
   const { total } = req.body;
 
   const create_payment_json = {
@@ -709,7 +709,7 @@ export const createPaypalPayment = async (req, res) => {
   });
 };
 
-export const executePaypalPayment = async (req, res) => {
+const executePaypalPayment = async (req, res) => {
   const { paymentId, PayerID } = req.query;
 
   const execute_payment_json = {
@@ -732,7 +732,7 @@ export const executePaypalPayment = async (req, res) => {
   });
 };
 
-export const getFailedOrderController = async (req, res) => {
+const getFailedOrderController = async (req, res) => {
   const id = req.params.id;
   const order = await getFailedOrderService(id);
   res.status(STATUS_CODES.OK).json({
@@ -742,7 +742,7 @@ export const getFailedOrderController = async (req, res) => {
   });
 };
 
-export const retryFiledRazorpayVerify = async (req, res) => {
+const retryFiledRazorpayVerify = async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, id } = req.body;
   const generated_signature = crypto
     .createHmac('sha256', process.env.RAZORPAY_TEST_KEY_SECRET)
@@ -765,7 +765,7 @@ export const retryFiledRazorpayVerify = async (req, res) => {
   });
 };
 
-export const retryFailedOrderWithCOD = async (req, res) => {
+const retryFailedOrderWithCOD = async (req, res) => {
   const { id, payment, items } = req.body;
   const order = await retryFailedOrderService(req.userId, id, payment, items);
   res.status(STATUS_CODES.OK).json({
@@ -775,7 +775,7 @@ export const retryFailedOrderWithCOD = async (req, res) => {
   });
 };
 
-export const retryFailedOrderWithWallet = async (req, res) => {
+const retryFailedOrderWithWallet = async (req, res) => {
   const order = await retryFailedOrderWithWalletService(req.userId, req.body);
   res.status(STATUS_CODES.OK).json({
     success: true,
@@ -784,7 +784,7 @@ export const retryFailedOrderWithWallet = async (req, res) => {
   });
 };
 
-export const getTopSellingProducts = async (req, res) => {
+const getTopSellingProducts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const perPage = parseInt(req.query.perPage) || 10;
   const { type, startDate, endDate, year, month } = req.query;
@@ -807,7 +807,7 @@ export const getTopSellingProducts = async (req, res) => {
   });
 };
 
-export const getTopSellingCategories = async (req, res) => {
+const getTopSellingCategories = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const perPage = parseInt(req.query.perPage) || 10;
   const { type, startDate, endDate, year, month } = req.query;
@@ -830,7 +830,7 @@ export const getTopSellingCategories = async (req, res) => {
   });
 };
 
-export const getTopSellingBrands = async (req, res) => {
+const getTopSellingBrands = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const perPage = parseInt(req.query.perPage) || 10;
   const { type, startDate, endDate, year, month } = req.query;
@@ -853,17 +853,53 @@ export const getTopSellingBrands = async (req, res) => {
   });
 };
 
-export const getRevenueChartData = async (req, res) => {
+const getRevenueChartData = async (req, res) => {
   const data = await getRevenueChartDataService(req.query);
   return res.status(200).json({ success: true, error: false, data });
 };
 
-export const getSalesChartData = async (req, res) => {
+const getSalesChartData = async (req, res) => {
   const data = await getSalesChartDataService(req.query);
   return res.status(200).json({ success: true, error: false, data });
 };
 
-export const getOrderStatusChartData = async (req, res) => {
+const getOrderStatusChartData = async (req, res) => {
   const data = await getOrdersStatusChartDataService(req.query);
   return res.status(200).json({ success: true, error: false, data });
+};
+
+export {
+  placeOrder,
+  getOrders,
+  getOrderItemById,
+  downloadInvoice,
+  getAdminOrdersController,
+  getOrderItemsByOrderId,
+  updateOrderStatus,
+  getAdminOrdersByItems,
+  cancelOrderByUser,
+  returnRequestController,
+  approveReturnRequestController,
+  rejectReturnRequestController,
+  getReturnRequestsController,
+  AddReviewController,
+  getReviewsOController,
+  getSalesReportController,
+  downloadSalesReportExcel,
+  downloadSalesReportPDF,
+  createRazorpayOrder,
+  verifyRazorpayPayment,
+  orderWithWallet,
+  createPaypalPayment,
+  executePaypalPayment,
+  getFailedOrderController,
+  retryFiledRazorpayVerify,
+  retryFailedOrderWithCOD,
+  retryFailedOrderWithWallet,
+  getTopSellingProducts,
+  getTopSellingCategories,
+  getTopSellingBrands,
+  getRevenueChartData,
+  getSalesChartData,
+  getOrderStatusChartData,
 };

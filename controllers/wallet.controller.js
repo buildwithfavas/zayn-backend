@@ -4,7 +4,7 @@ import { getWalletService, getWalletTransactionsService } from '../services/wall
 import { STATUS_CODES } from '../utils/statusCodes.js';
 import crypto from 'crypto';
 
-export const addMoneyToWalletController = async (req, res) => {
+const addMoneyToWalletController = async (req, res) => {
   const userId = req.userId;
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -37,7 +37,7 @@ export const addMoneyToWalletController = async (req, res) => {
   return res.status(STATUS_CODES.OK).json({ success: true, message: 'Payment Successful' });
 };
 
-export const getWalletController = async (req, res) => {
+const getWalletController = async (req, res) => {
   const userId = req.userId;
   const wallet = await getWalletService(userId);
   res.status(STATUS_CODES.OK).json({
@@ -47,7 +47,7 @@ export const getWalletController = async (req, res) => {
   });
 };
 
-export const getWalletTransactions = async (req, res) => {
+const getWalletTransactions = async (req, res) => {
   const userId = req.userId;
   const page = parseInt(req.query.page);
   const perPage = parseInt(req.query.perPage);
@@ -64,5 +64,9 @@ export const getWalletTransactions = async (req, res) => {
     page,
     perPage,
     totalPages,
+    totalPosts,
+    totalPages,
   });
 };
+
+export { addMoneyToWalletController, getWalletController, getWalletTransactions };

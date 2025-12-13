@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const invoiceTemplateGenerate = (order, item, discount) => {
+const invoiceTemplateGenerate = (order, item, discount) => {
   const subtotal = item.oldPrice * item.quantity;
   const total = item.price * item.quantity;
 
@@ -66,3 +66,5 @@ export const invoiceTemplateGenerate = (order, item, discount) => {
 
   return html;
 };
+
+export { invoiceTemplateGenerate };

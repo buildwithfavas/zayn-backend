@@ -6,7 +6,7 @@ import {
 } from '../services/size.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-export const addSize = async (req, res) => {
+const addSize = async (req, res) => {
   const { label } = req.body;
   const size = await addSizeService(label);
   return res.status(STATUS_CODES.OK).json({
@@ -17,7 +17,7 @@ export const addSize = async (req, res) => {
   });
 };
 
-export const getSize = async (req, res) => {
+const getSize = async (req, res) => {
   const sizes = await getSizesService();
   return res.status(STATUS_CODES.OK).json({
     success: true,
@@ -26,7 +26,7 @@ export const getSize = async (req, res) => {
   });
 };
 
-export const blockSize = async (req, res) => {
+const blockSize = async (req, res) => {
   const id = req.params.id;
   const size = await blockSizeService(id);
   return res.status(STATUS_CODES.OK).json({
@@ -36,7 +36,7 @@ export const blockSize = async (req, res) => {
   });
 };
 
-export const editSize = async (req, res) => {
+const editSize = async (req, res) => {
   const id = req.params.id;
   const { label } = req.body;
   const size = await editSizeService(id, label);
@@ -47,3 +47,5 @@ export const editSize = async (req, res) => {
     size,
   });
 };
+
+export { addSize, getSize, blockSize, editSize };

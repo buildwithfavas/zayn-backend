@@ -1,7 +1,7 @@
 import offerModel from '../models/offers.model.js';
 import productModel from '../models/product.model.js';
 
-export const addOfferToCategoryService = async (body) => {
+const addOfferToCategoryService = async (body) => {
   const { category, discountValue } = body;
   const offer = await offerModel.updateOne(
     { category },
@@ -11,7 +11,7 @@ export const addOfferToCategoryService = async (body) => {
   return offer;
 };
 
-export const addOfferProductService = async (body) => {
+const addOfferProductService = async (body) => {
   const { product, discountValue } = body;
   const offer = await offerModel.updateOne(
     { scope: 'product' },
@@ -22,7 +22,7 @@ export const addOfferProductService = async (body) => {
   return offer;
 };
 
-export const addGlobalOfferService = async (body) => {
+const addGlobalOfferService = async (body) => {
   const { discountValue, title, startDate, expiryDate } = body;
   const offer = await offerModel.create({
     scope: 'global',
@@ -34,7 +34,7 @@ export const addGlobalOfferService = async (body) => {
   return offer;
 };
 
-export const getCategoryOffersService = async (page, perPage) => {
+const getCategoryOffersService = async (page, perPage) => {
   const totalPosts = await offerModel.countDocuments({ scope: 'category' });
   const offers = await offerModel
     .find({ scope: 'category' })
@@ -44,7 +44,7 @@ export const getCategoryOffersService = async (page, perPage) => {
   return { offers, totalPosts };
 };
 
-export const getGlobalOffersService = async (page, perPage) => {
+const getGlobalOffersService = async (page, perPage) => {
   const totalPosts = await offerModel.countDocuments({ scope: 'global' });
   const offers = await offerModel
     .find({ scope: 'global' })
@@ -53,7 +53,7 @@ export const getGlobalOffersService = async (page, perPage) => {
   return { offers, totalPosts };
 };
 
-export const toggleOfferStatusService = async (id) => {
+const toggleOfferStatusService = async (id) => {
   const offer = await offerModel.findByIdAndUpdate(
     id,
     [{ $set: { isActive: { $not: '$isActive' } } }],
@@ -62,7 +62,7 @@ export const toggleOfferStatusService = async (id) => {
   return offer;
 };
 
-export const editCategoryOfferService = async (id, body) => {
+const editCategoryOfferService = async (id, body) => {
   const offer = await offerModel.findByIdAndUpdate(
     id,
     { $set: { discountValue: body.discountValue } },
@@ -71,7 +71,18 @@ export const editCategoryOfferService = async (id, body) => {
   return offer;
 };
 
-export const editGlobalOfferService = async (id, body) => {
+const editGlobalOfferService = async (id, body) => {
   const offer = await offerModel.findByIdAndUpdate(id, { $set: { ...body } }, { new: true });
   return offer;
+};
+
+export {
+  addOfferToCategoryService,
+  addOfferProductService,
+  addGlobalOfferService,
+  getCategoryOffersService,
+  getGlobalOffersService,
+  toggleOfferStatusService,
+  editCategoryOfferService,
+  editGlobalOfferService,
 };

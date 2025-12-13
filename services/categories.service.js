@@ -10,7 +10,7 @@ cloudinary.config({
   secure: true,
 });
 
-export const createCategoryService = async (image, { name, parent, level }) => {
+const createCategoryService = async (image, { name, parent, level }) => {
   let isExist;
   let parentCatName;
   if (parent) {
@@ -57,7 +57,7 @@ export const createCategoryService = async (image, { name, parent, level }) => {
   return category;
 };
 
-export const getCategoriesService = async (query) => {
+const getCategoriesService = async (query) => {
   const filter = {};
   if (query.user == 'true') {
     filter.isBlocked = false;
@@ -82,13 +82,13 @@ export const getCategoriesService = async (query) => {
   return { categoryMap, rootTree };
 };
 
-export const removeCatImgFromCloudinaryService = async (catImage) => {
+const removeCatImgFromCloudinaryService = async (catImage) => {
   const imageName = catImage.split('/').pop().split('.')[0];
   const del = await cloudinary.uploader.destroy(imageName);
   return del;
 };
 
-export const updateCategoryService = async (id, image, { name, parent }) => {
+const updateCategoryService = async (id, image, { name, parent }) => {
   const category = await categoryModel.findById(id);
 
   let imageUrl = null;
@@ -150,7 +150,7 @@ export const updateCategoryService = async (id, image, { name, parent }) => {
   return updated;
 };
 
-export const getCatsByLevelService = async (level, page, perPage, search) => {
+const getCatsByLevelService = async (level, page, perPage, search) => {
   let filter = { level: level };
   if (search) {
     filter.name = { $regex: search, $options: 'i' };
@@ -168,7 +168,7 @@ export const getCatsByLevelService = async (level, page, perPage, search) => {
   return categories;
 };
 
-export const blockCategoryService = async (id) => {
+const blockCategoryService = async (id) => {
   const category = await categoryModel.findById(id);
   const newState = !category.isBlocked;
   category.isBlocked = newState;
@@ -179,4 +179,13 @@ export const blockCategoryService = async (id) => {
     await categoryModel.updateMany({ parentId: sub._id }, { $set: { isBlocked: newState } });
   }
   return category;
+};
+
+export {
+  createCategoryService,
+  getCategoriesService,
+  removeCatImgFromCloudinaryService,
+  updateCategoryService,
+  getCatsByLevelService,
+  blockCategoryService,
 };

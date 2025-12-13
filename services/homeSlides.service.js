@@ -7,7 +7,7 @@ cloudinary.config({
   api_secret: process.env.CLOUD_SECRETE_KEY,
   secure: true,
 });
-export const homeSlidesAddService = async (image, body) => {
+const homeSlidesAddService = async (image, body) => {
   let imageUrl;
   if (image) {
     const options = {
@@ -28,7 +28,7 @@ export const homeSlidesAddService = async (image, body) => {
   return homeSlide;
 };
 
-export const getHomeSlidesService = async (page, perPage, user) => {
+const getHomeSlidesService = async (page, perPage, user) => {
   const totalPosts = await homeSlidesModel.countDocuments();
   const filter = {};
   if (user) {
@@ -42,7 +42,7 @@ export const getHomeSlidesService = async (page, perPage, user) => {
   return { homeSlides, totalPosts };
 };
 
-export const editHomeSlidesService = async (id, body, image) => {
+const editHomeSlidesService = async (id, body, image) => {
   const homeSlide = await homeSlidesModel.findById(id);
   const { description, link } = body;
   if (image) {
@@ -65,9 +65,16 @@ export const editHomeSlidesService = async (id, body, image) => {
   return homeSlide;
 };
 
-export const homeSlidesToggleBlockService = async (id) => {
+const homeSlidesToggleBlockService = async (id) => {
   const homeSlide = await homeSlidesModel.findByIdAndUpdate(id, [
     { $set: { isUnlisted: { $not: '$isUnlisted' } } },
   ]);
   return homeSlide;
+};
+
+export {
+  homeSlidesAddService,
+  getHomeSlidesService,
+  editHomeSlidesService,
+  homeSlidesToggleBlockService,
 };
