@@ -31,90 +31,27 @@ export const registerUserService = async ({
   password,
   referralCode,
 }) => {
-  // Check if user already exists in the database
+  // Check if user already exists
   const existingUser = await userModel.findOne({ email: email });
   if (existingUser) {
     throw new AppError('User already exists with this email address', STATUS_CODES.CONFLICT);
   }
 
-  // Check if there's already a pending registration for this email
-  const pendingRegistration = await OtpModel.findOne({ email: email });
-  if (pendingRegistration) {
-    // Delete old pending registration and create a new one
-    await OtpModel.deleteOne({ email: email });
-  }
-
-  // Hash password before storing
+  // Hash password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
   // Generate OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Validate referral code if provided (but don't create coupon yet)
-  if (referralCode) {
+  if (referralCode) {  // wrong need changes.
     const referred = await userModel.findOne({ referralCode });
-    if (!referred) {
-      throw new AppError('Invalid referral code', STATUS_CODES.BAD_REQUEST);
-    }
-  }
-
-  // Store all registration data temporarily in OTP model
-  await OtpModel.create({
-    email: email,
-    otp: otp,
-    otp_expiry: Date.now() + 60000,
-    firstName: firstName,
-    lastName: lastName,
-    password: hashedPassword,
-    referralCode: referralCode || null,
-  });
-
-  // Send verification email
-  await sendEmail({
-    to: email,
-    subject: 'Verification mail from zayn collection',
-    text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(`${firstName} ${lastName}`, otp),
-  });
-
-  return { email, firstName, lastName };
-};
-
-export const verifyEmailService = async ({ email, otp }) => {
-  // Find pending registration by email
-  const pendingRegistration = await OtpModel.findOne({ email: email });
-  if (!pendingRegistration) {
-    throw new AppError('No pending registration found for this email', STATUS_CODES.NOT_FOUND);
-  }
-
-  // Verify OTP
-  const isCodeValid = pendingRegistration.otp == otp;
-  const isNotExpired = pendingRegistration.otp_expiry > new Date();
-
-  if (!isCodeValid) {
-    throw new AppError('Invalid OTP', STATUS_CODES.BAD_REQUEST);
-  } else if (!isNotExpired) {
-    throw new AppError('OTP expired', STATUS_CODES.BAD_REQUEST);
-  }
-
-  // OTP is valid - now create the user in the database
-  const user = new userModel({
-    email: pendingRegistration.email,
-    password: pendingRegistration.password, // Already hashed
-    firstName: pendingRegistration.firstName,
-    lastName: pendingRegistration.lastName,
-    isVerified: true, // Mark as verified immediately
-  });
-
-  await user.save();
-
-  // Handle referral code logic after user creation
-  if (pendingRegistration.referralCode) {
-    const referred = await userModel.findOne({ referralCode: pendingRegistration.referralCode });
     if (referred) {
-      const expiryDate = new Date().setDate(new Date().getDate() + 30);
-      const code = await generateReferralCode(referred.firstName);
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 30);
+
+      const code = await generateReferralCode(referred.firstName || referred.name || 'USER');
+
       await couponModel.create({
         code,
         description: 'Referral Coupon offers 30% of offer for orders above Rs.100',
@@ -128,36 +65,95 @@ export const verifyEmailService = async ({ email, otp }) => {
     }
   }
 
-  // Clean up - delete the pending registration
-  await OtpModel.deleteOne({ email: email });
+  // Create User First (Unverified)
+  const user = new userModel({
+    email,
+    password: hashedPassword,
+    firstName,
+    lastName,
+    isVerified: false,
+    referralCode: null, // Ensure null so pre-save hook generates a NEW unique code for this user
+  });
+
+  await user.save();
+
+  // Create OTP linked to userId
+  await OtpModel.create({
+    userId: user._id,
+    otp: otp,
+    otp_expiry: Date.now() + 60000,
+  });
+
+  // Send Email
+  await sendEmail({
+    to: email,
+    subject: 'Verification mail from zayn collection',
+    text: `Your OTP is ${otp}`,
+    html: verifyMailTemplate(`${firstName} ${lastName}`, otp),
+  });
+
+  return { email, firstName, lastName };
+};
+
+export const verifyEmailService = async ({ email, otp }) => {
+  const user = await userModel.findOne({ email: email });
+  if (!user) {
+    throw new AppError('User not found', STATUS_CODES.NOT_FOUND);
+  }
+
+  const userOtp = await OtpModel.findOne({ userId: user._id });
+  if (!userOtp) {
+    throw new AppError('OTP not found or expired', STATUS_CODES.BAD_REQUEST);
+  }
+
+  const isCodeValid = userOtp.otp == otp;
+  const isNotExpired = userOtp.otp_expiry > new Date();
+
+  if (!isCodeValid) {
+    throw new AppError('Invalid OTP', STATUS_CODES.BAD_REQUEST);
+  } else if (!isNotExpired) {
+    throw new AppError('OTP expired', STATUS_CODES.BAD_REQUEST);
+  }
+
+  // Verify User
+  user.isVerified = true;
+  await user.save();
+
+  // Mark OTP as verified (optional, or delete)
+  userOtp.isVerified = true;
+  await userOtp.save();
 
   return true;
 };
 
 export const resendOtpService = async (email) => {
-  // Find pending registration by email
-  const pendingRegistration = await OtpModel.findOne({ email: email });
-  if (!pendingRegistration) {
-    throw new AppError('No pending registration found for this email', STATUS_CODES.NOT_FOUND);
+  const user = await userModel.findOne({ email: email });
+  if (!user) {
+    throw new AppError('User not found', STATUS_CODES.NOT_FOUND);
   }
 
-  // Generate new OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Update existing OTP record
-  pendingRegistration.otp = otp;
-  pendingRegistration.otp_expiry = Date.now() + 60000;
-  await pendingRegistration.save();
+  // Find existing OTP by userId
+  const userOtp = await OtpModel.findOne({ userId: user._id });
 
-  // Resend verification email
+  if (userOtp) {
+    userOtp.otp = otp;
+    userOtp.otp_expiry = Date.now() + 60000;
+    await userOtp.save();
+  } else {
+    await OtpModel.create({
+      userId: user._id,
+      otp: otp,
+      otp_expiry: Date.now() + 60000,
+    });
+  }
+
   await sendEmail({
     to: email,
     subject: 'Verification mail from Zayn Collection',
     text: `Your OTP is ${otp}`,
-    html: verifyMailTemplate(
-      `${pendingRegistration.firstName} ${pendingRegistration.lastName}`,
-      otp
-    ),
+    html: verifyMailTemplate(`${user.firstName} ${user.lastName}`, otp),
   });
 };
 
@@ -174,7 +170,7 @@ export const userLoginService = async ({ email, password }) => {
     throw new AppError('Please verify your email', STATUS_CODES.FORBIDDEN);
   }
   if (!user.password) {
-    throw new AppError('No password ser for this email', STATUS_CODES.FORBIDDEN);
+    throw new AppError('No password set for this email', STATUS_CODES.FORBIDDEN);
   }
   const checkPass = await bcrypt.compare(password, user.password);
   if (!checkPass) {
@@ -221,20 +217,14 @@ export const forgotPasswordServices = async (email) => {
   });
 };
 
-export const resetPasswordService = async (email, newPassword, currentPassword) => {
+export const resetPasswordService = async (email, newPassword) => {
   const user = await userModel.findOne({ email: email });
-  const userOtp = await OtpModel.findOne({ userId: user._id });
+  const userOtp = await OtpModel.findOne({ email });
   if (userOtp && !userOtp.isVerified) {
     throw new AppError('Please verify your mail');
   }
   if (!user.isVerified) {
     throw new AppError('Please verify your mail');
-  }
-  if (currentPassword) {
-    const verify = await bcrypt.compare(currentPassword, user.password);
-    if (!verify) {
-      throw new AppError('Incorrect password', STATUS_CODES.BAD_REQUEST);
-    }
   }
   if (user.password) {
     const isSameWithOld = await bcrypt.compare(newPassword, user.password);
@@ -382,7 +372,7 @@ export const emailChangeOtpService = async (userId, email) => {
     await userOtp.save();
   } else {
     await OtpModel.create({
-      userId: user._id,
+      email: email,
       otp: otp,
       otp_expiry: Date.now() + 60000,
     });
@@ -418,8 +408,8 @@ export const emailChangeResendOtpService = async (email, userId) => {
   });
 };
 
-export const emailChangeVerifyService = async (userId, otp) => {
-  let userOtp = await OtpModel.findOne({ userId });
+export const emailChangeVerifyService = async (email, otp) => {
+  let userOtp = await OtpModel.findOne({ email });
   const isCodeValid = userOtp.otp == otp;
   const isNotExpired = userOtp.otp_expiry > new Date();
   if (!isCodeValid) {

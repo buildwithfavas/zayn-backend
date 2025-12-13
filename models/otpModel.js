@@ -2,9 +2,10 @@ import mongoose from 'mongoose';
 
 const otpSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: 'User',
     },
     otp: {
       type: String,
@@ -16,19 +17,6 @@ const otpSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
       default: false,
-    },
-    // Temporary storage for pending registration data
-    firstName: {
-      type: String,
-    },
-    lastName: {
-      type: String,
-    },
-    password: {
-      type: String, // Will store hashed password
-    },
-    referralCode: {
-      type: String,
     },
     createdAt: {
       type: Date,

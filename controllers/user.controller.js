@@ -148,7 +148,8 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-  const { email, newPassword, confirmPassword, currentPassword } = req.body;
+  const { email, newPassword, confirmPassword } = req.body;
+  console.log(req.body);
   if (!email || !newPassword || !confirmPassword) {
     throw new AppError('All fields are required', STATUS_CODES.BAD_REQUEST);
   }
@@ -158,7 +159,7 @@ export const resetPassword = async (req, res) => {
       STATUS_CODES.BAD_REQUEST
     );
   }
-  await resetPasswordService(email, newPassword, currentPassword);
+  await resetPasswordService(email, newPassword );
   return res.status(STATUS_CODES.OK).json({
     message: 'password updated successfully',
     success: true,
@@ -251,9 +252,9 @@ export const emailChangeOtpResend = async (req, res) => {
 };
 
 export const emailChangeVerifyController = async (req, res) => {
-  const userId = req.userId;
+  const email = req.body.email;
   const otp = req.body.otp;
-  await emailChangeVerifyService(userId, otp);
+  await emailChangeVerifyService(email, otp);
   return res.status(200).json({
     success: true,
     error: false,
