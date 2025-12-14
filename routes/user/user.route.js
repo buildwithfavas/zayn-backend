@@ -68,7 +68,7 @@ userRouter.get(
     session: false,
   })
 );
-userRouter.post(
+userRouter.get(
   '/facebook/callback',
   passport.authenticate('facebook', {
     failureRedirect: process.env.FRONTEND_URL + '/login',

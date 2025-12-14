@@ -18,6 +18,17 @@ passport.use(
     },
     async (_, __, profile, done) => {
       try {
+        console.log('---------------- GOOGLE AUTH DEBUGGER ----------------');
+        console.log('Google Profile:', JSON.stringify(profile, null, 2));
+
+        const extractedFirstName = profile.name?.givenName || profile.displayName.split(' ')[0];
+        const extractedLastName =
+          profile.name?.familyName || profile.displayName.split(' ').slice(1).join(' ') || 'User';
+
+        console.log('Extracted firstName:', extractedFirstName);
+        console.log('Extracted lastName:', extractedLastName);
+        console.log('------------------------------------------------------');
+
         const email = profile.emails?.[0]?.value;
         if (!email) return done(new Error('No email from Google'));
 
@@ -27,10 +38,12 @@ passport.use(
         }
         if (!user) {
           user = new userModel({
-            name: profile.displayName || profile.name?.givenName,
+            firstName: extractedFirstName,
+            lastName: extractedLastName,
             email,
             isVerified: true,
             googleId: profile.id,
+            gender: null,
             image: normalizeGooglePhoto(profile.photos?.[0]?.value) || null,
           });
           await user.save();

@@ -21,14 +21,21 @@ import {
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
 const registerUser = async (req, res) => {
-  const { firstName, lastName, email, password, referralCode } = req.body;
+  const { firstName, lastName, email, password, referralCode, gender } = req.body;
   if (!firstName || !lastName || !email || !password) {
     throw new AppError(
       'Provide email, first name, last name, and password',
       STATUS_CODES.BAD_REQUEST
     );
   }
-  const user = await registerUserService({ firstName, lastName, email, password, referralCode });
+  const user = await registerUserService({
+    firstName,
+    lastName,
+    email,
+    password,
+    referralCode,
+    gender,
+  });
   return res.status(STATUS_CODES.OK).json({
     success: true,
     message: 'User registered successfully , please verify your email',

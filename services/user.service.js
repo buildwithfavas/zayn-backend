@@ -24,11 +24,25 @@ cloudinary.config({
   secure: true,
 });
 
-const registerUserService = async ({ firstName, lastName, email, password, referralCode }) => {
+const registerUserService = async ({
+  firstName,
+  lastName,
+  email,
+  password,
+  referralCode,
+  gender,
+}) => {
   // Check if user already exists
   const existingUser = await userModel.findOne({ email: email });
+
   if (existingUser) {
-    throw new AppError('User already exists with this email address', STATUS_CODES.CONFLICT);
+    if (existingUser.isVerified) {
+      throw new AppError('User already exists with this email address', STATUS_CODES.CONFLICT);
+    } else {
+      // Delete unverified user and their OTP to avoid duplicate key error
+      await OtpModel.deleteMany({ userId: existingUser._id });
+      await userModel.findByIdAndDelete(existingUser._id);
+    }
   }
 
   // Hash password
@@ -66,6 +80,7 @@ const registerUserService = async ({ firstName, lastName, email, password, refer
     password: hashedPassword,
     firstName,
     lastName,
+    gender: gender || null,
     isVerified: false,
     referralCode: null, // Ensure null so pre-save hook generates a NEW unique code for this user
   });
