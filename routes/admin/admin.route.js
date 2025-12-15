@@ -9,6 +9,8 @@ import {
   authAdminController,
   refreshToken,
 } from '../../controllers/admin.controller.js';
+import { loginValidation } from '../../middlewares/validation/validationSchamas.js';
+import { validationErrorHandle } from '../../middlewares/validation/validationHandle.js';
 import usersRouter from './users.route.js';
 import sizeRouter from './size.route.js';
 import homeSlidesRouter from './homeSlides.route.js';
@@ -26,7 +28,12 @@ adminRouter.use('/orders', adminOrderRouter);
 adminRouter.use('/offers', offerRouter);
 adminRouter.use('/coupon', couponRouter);
 
-adminRouter.post('/login', asyncHandler(adminLoginController));
+adminRouter.post(
+  '/login',
+  loginValidation,
+  validationErrorHandle,
+  asyncHandler(adminLoginController)
+);
 adminRouter.get('/logout', adminAuth, asyncHandler(adminLogoutController));
 adminRouter.get('/auth', adminAuth, asyncHandler(authAdminController));
 adminRouter.get('/refresh', asyncHandler(refreshToken));
