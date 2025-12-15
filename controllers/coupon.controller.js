@@ -6,7 +6,7 @@ import {
   getCouponService,
   removeAppliedCouponService,
   toggleCouponStatusService,
-} from '../services/coupen.service.js';
+} from '../services/coupon.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
 const addCouponController = async (req, res) => {

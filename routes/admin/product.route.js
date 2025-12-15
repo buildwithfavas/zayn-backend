@@ -14,7 +14,7 @@ import variantRouter from './variants.route.js';
 import {
   editProductValidation,
   productValidation,
-} from '../../middlewares/validation/validationSchamas.js';
+} from '../../middlewares/validation/validationSchemas.js';
 import { validationErrorHandle } from '../../middlewares/validation/validationHandle.js';
 const productsRouter = Router();
 

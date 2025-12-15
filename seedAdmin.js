@@ -10,17 +10,20 @@ const seedAdmin = async () => {
     await connectDb();
 
     const email = 'admin@gmail.com';
-    const password = 'admin@123';
+    const password = 'Admin@123';
     const name = 'Admin';
-
-    const existingAdmin = await adminModel.findOne({ email });
-    if (existingAdmin) {
-      console.log('Admin already exists');
-      process.exit(0);
-    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    const existingAdmin = await adminModel.findOne({ email });
+    if (existingAdmin) {
+      console.log('Admin already exists. Updating password...');
+      existingAdmin.password = hashedPassword;
+      await existingAdmin.save();
+      console.log('Admin password updated successfully');
+      process.exit(0);
+    }
 
     const newAdmin = new adminModel({
       name,

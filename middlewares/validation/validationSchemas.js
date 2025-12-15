@@ -216,9 +216,38 @@ const editProductValidation = [
   body('isFeatured').isString().withMessage('isFeatured must be true or false.').toBoolean(),
 ];
 
+const adminLoginValidation = [
+  body('email')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Invalid email format'),
+
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters')
+    .matches(/(?=.*[a-z])/)
+    .withMessage('Password must contain at least one lowercase letter')
+    .matches(/(?=.*[A-Z])/)
+    .withMessage('Password must contain at least one uppercase letter')
+    .matches(/(?=.*\d)/)
+    .withMessage('Password must contain at least one number')
+    .matches(/(?=.*[^A-Za-z0-9])/)
+    .withMessage('Password must contain at least one special character')
+    .custom((value) => {
+      if (!value.trim().length) {
+        throw new Error('Password cannot be empty spaces');
+      }
+      return true;
+    }),
+];
+
 export {
   signupValidation,
   loginValidation,
+  adminLoginValidation,
   resetPassValidation,
   productValidation,
   editProductValidation,

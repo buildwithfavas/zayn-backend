@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { forgotPassword, resetPassword } from '../../controllers/user.controller.js';
 import { asyncHandler } from '../../middlewares/Error/asyncHandler.js';
-import { resetPassValidation } from '../../middlewares/validation/validationSchamas.js';
+import { resetPassValidation } from '../../middlewares/validation/validationSchemas.js';
 import { validationErrorHandle } from '../../middlewares/validation/validationHandle.js';
 
 const PasswordRouter = Router();

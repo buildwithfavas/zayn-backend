@@ -8,11 +8,11 @@ import jwt from 'jsonwebtoken';
 const adminLoginService = async ({ email, password }) => {
   const admin = await adminModel.findOne({ email: email });
   if (!admin) {
-    throw new AppError('Invalid email address, Admin not found', STATUS_CODES.NOT_FOUND);
+    throw new AppError('Invalid email or password', STATUS_CODES.UNAUTHORIZED);
   }
   const checkPass = await bcrypt.compare(password, admin.password);
   if (!checkPass) {
-    throw new AppError('Incorrect password', STATUS_CODES.BAD_REQUEST);
+    throw new AppError('Invalid email or password', STATUS_CODES.UNAUTHORIZED);
   }
   const accessToken = await generateAccessToken(admin._id, 'Admin');
   const refreshToken = await generateRefreshToken(admin._id, 'Admin');

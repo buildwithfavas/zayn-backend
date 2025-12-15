@@ -5,7 +5,7 @@ import {
   applyCouponController,
   getCouponForUserController,
   removeAppliedCouponController,
-} from '../../controllers/coupen.controller.js';
+} from '../../controllers/coupon.controller.js';
 
 const couponRouter = Router();
 

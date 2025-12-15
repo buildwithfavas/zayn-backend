@@ -16,7 +16,7 @@ import { getAllCategories } from '../../controllers/category.controller.js';
 import {
   loginValidation,
   signupValidation,
-} from '../../middlewares/validation/validationSchamas.js';
+} from '../../middlewares/validation/validationSchemas.js';
 import { validationErrorHandle } from '../../middlewares/validation/validationHandle.js';
 import { asyncHandler } from '../../middlewares/Error/asyncHandler.js';
 import userAuth from '../../middlewares/auth/userAuth.js';
