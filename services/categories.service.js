@@ -38,10 +38,18 @@ const createCategoryService = async (image, { name, parent, level }) => {
     overwrite: false,
   };
   if (image) {
+    console.log('Service - Uploading image to Cloudinary...');
     await cloudinary.uploader.upload(image.path, options, function (error, result) {
-      imageUrl = result.secure_url;
-      fs.unlinkSync(`uploads/${image.filename}`);
+      if (error) {
+        console.error('Cloudinary Upload Error:', error);
+      } else {
+        console.log('Cloudinary Upload Success:', result);
+        imageUrl = result.secure_url;
+        fs.unlinkSync(`uploads/${image.filename}`);
+      }
     });
+  } else {
+    console.log('Service - No image provided to upload');
   }
 
   const parentId = await categoryModel.findOne({ name: parent });
