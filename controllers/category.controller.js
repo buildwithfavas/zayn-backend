@@ -1,3 +1,4 @@
+import fs from 'fs';
 import AppError from '../middlewares/Error/appError.js';
 import {
   blockCategoryService,
@@ -5,11 +6,18 @@ import {
   getCategoriesService,
   getCatsByLevelService,
   updateCategoryService,
+  deleteCategoryService,
 } from '../services/categories.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
 const createCategory = async (req, res) => {
   const image = req.file;
+
+  // DEBUG LOGGING
+
+  const debugLog = `[${new Date().toISOString()}] Create Payload: ${JSON.stringify(req.body)}\n`;
+  fs.appendFileSync('debug_create.txt', debugLog);
+
   const category = await createCategoryService(image, req.body);
   if (!category) {
     throw new AppError('Category creation failed', STATUS_CODES.BAD_REQUEST);
@@ -53,12 +61,14 @@ const getCategoriesByLevel = async (req, res) => {
   const perPage = req?.query?.perPage;
   const page = req?.query?.page;
   const search = req?.query?.search;
+  const filter = req?.query?.filter;
   if ((perPage, page)) {
     const { categories, totalPosts, totalPages } = await getCatsByLevelService(
       level,
       page,
       perPage,
-      search
+      search,
+      filter
     );
     return res.status(STATUS_CODES.OK).json({
       success: true,
@@ -86,10 +96,30 @@ const blockCategory = async (req, res) => {
     success: true,
     error: false,
     category,
-    message: category.isBlocked
+    message: !category.isListed
       ? 'Category Blocked Successfully '
       : 'Category Unblocked Successfully',
   });
 };
 
-export { createCategory, getAllCategories, updateCategory, getCategoriesByLevel, blockCategory };
+const deleteCategory = async (req, res) => {
+  const id = req.params.id;
+  const deleted = await deleteCategoryService(id);
+  if (!deleted) {
+    throw new AppError('Category deletion failed', STATUS_CODES.INTERNAL_SERVER_ERROR);
+  }
+  return res.status(STATUS_CODES.OK).json({
+    success: true,
+    error: false,
+    message: 'Category and its subcategories deleted successfully',
+  });
+};
+
+export {
+  createCategory,
+  getAllCategories,
+  updateCategory,
+  getCategoriesByLevel,
+  blockCategory,
+  deleteCategory,
+};

@@ -2,13 +2,22 @@ import AppError from '../middlewares/Error/appError.js';
 import sizeModel from '../models/size.model.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
-const addSizeService = async (label) => {
-  const isExist = await sizeModel.find({ label: { $regex: label, $options: 'i' } });
-  if (isExist) {
-    throw new AppError('size already exist', STATUS_CODES.CONFLICT);
+const addSizeService = async (label, category) => {
+  // Check for duplicates within the specific category to allow same label in different categories if needed
+  // or globally if stricter. Given the use case (S, M, L vs 8, 9, 10), global uniqueness isn't strictly necessary
+  // but "S" in Footwear makes no sense. So scoping by category is better.
+  const isExist = await sizeModel.find({
+    label: { $regex: new RegExp(`^${label}$`, 'i') }, // Exact match case-insensitive
+    category: category || 'fashion',
+  });
+
+  if (isExist.length > 0) {
+    throw new AppError('Size already exists in this category', STATUS_CODES.CONFLICT);
   }
+
   const size = new sizeModel({
     label,
+    category: category || 'fashion',
   });
 
   await size.save();

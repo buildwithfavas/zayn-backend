@@ -7,8 +7,8 @@ import {
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
 const addSize = async (req, res) => {
-  const { label } = req.body;
-  const size = await addSizeService(label);
+  const { label, category } = req.body;
+  const size = await addSizeService(label, category);
   return res.status(STATUS_CODES.OK).json({
     success: true,
     error: false,

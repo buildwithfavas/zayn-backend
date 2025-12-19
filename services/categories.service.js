@@ -3,6 +3,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 import AppError from '../middlewares/Error/appError.js';
+
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
@@ -10,12 +11,18 @@ cloudinary.config({
   secure: true,
 });
 
-const createCategoryService = async (image, { name, parent, level }) => {
+const createCategoryService = async (image, { name, parent, parentId: inputParentId, level }) => {
   let isExist;
   let parentCatName;
+
+  // If parent name is provided, use it. If parentId is provided, we might need to fetch the name for parentCatName field
   if (parent) {
     parentCatName = parent.toLowerCase();
+  } else if (inputParentId) {
+    const p = await categoryModel.findById(inputParentId);
+    if (p) parentCatName = p.name.toLowerCase();
   }
+
   if (level == 'first') {
     isExist = await categoryModel.findOne({
       name: { $regex: `^${name}$`, $options: 'i' },
@@ -52,10 +59,16 @@ const createCategoryService = async (image, { name, parent, level }) => {
     console.log('Service - No image provided to upload');
   }
 
-  const parentId = await categoryModel.findOne({ name: parent });
+  // Determine parentId: use inputParentId if valid, otherwise resolve from parent name
+  let finalParentId = inputParentId;
+  if (!finalParentId && parent) {
+    const p = await categoryModel.findOne({ name: parent });
+    if (p) finalParentId = p._id;
+  }
+
   const category = new categoryModel({
     name,
-    parentId,
+    parentId: finalParentId,
     image: imageUrl,
     parentCatName,
     level,
@@ -68,7 +81,7 @@ const createCategoryService = async (image, { name, parent, level }) => {
 const getCategoriesService = async (query) => {
   const filter = {};
   if (query.user == 'true') {
-    filter.isBlocked = false;
+    filter.isListed = true;
   }
   if (query.search) {
     filter.name = { $regex: query.search, $options: 'i' };
@@ -86,7 +99,7 @@ const getCategoriesService = async (query) => {
       rootCategories.push(categoryMap[cat._id]);
     }
   });
-  const rootTree = rootCategories.filter((cat) => !cat.isBlocked);
+  const rootTree = rootCategories;
   return { categoryMap, rootTree };
 };
 
@@ -144,11 +157,17 @@ const updateCategoryService = async (id, image, { name, parent }) => {
   }
   const updatedData = {
     name,
-    parentId: parent && category.level != 'first' ? parentCat._id : null,
-    parentCatName,
   };
+
   if (imageUrl) {
     updatedData.image = imageUrl;
+  }
+
+  if (parent) {
+    updatedData.parentCatName = parent.toLowerCase();
+    if (category.level != 'first') {
+      updatedData.parentId = parentCat._id;
+    }
   }
   await categoryModel.updateMany(
     { parentCatName: category.name.toLowerCase() },
@@ -158,13 +177,18 @@ const updateCategoryService = async (id, image, { name, parent }) => {
   return updated;
 };
 
-const getCatsByLevelService = async (level, page, perPage, search) => {
+const getCatsByLevelService = async (level, page, perPage, search, filterStatus) => {
   let filter = { level: level };
   if (search) {
     filter.name = { $regex: search, $options: 'i' };
   }
+  if (filterStatus === 'active') {
+    filter.isListed = true;
+  } else if (filterStatus === 'blocked') {
+    filter.isListed = false;
+  }
   if ((perPage, page)) {
-    const totalPosts = await categoryModel.countDocuments({ level: level });
+    const totalPosts = await categoryModel.countDocuments(filter);
     const categories = await categoryModel
       .find(filter)
       .sort({ createdAt: -1 })
@@ -178,15 +202,50 @@ const getCatsByLevelService = async (level, page, perPage, search) => {
 
 const blockCategoryService = async (id) => {
   const category = await categoryModel.findById(id);
-  const newState = !category.isBlocked;
-  category.isBlocked = newState;
+  const newState = !category.isListed;
+  category.isListed = newState;
   await category.save();
-  await categoryModel.updateMany({ parentId: id }, { $set: { isBlocked: newState } });
+  await categoryModel.updateMany({ parentId: id }, { $set: { isListed: newState } });
   const subCats = await categoryModel.find({ parentId: id });
   for (let sub of subCats) {
-    await categoryModel.updateMany({ parentId: sub._id }, { $set: { isBlocked: newState } });
+    await categoryModel.updateMany({ parentId: sub._id }, { $set: { isListed: newState } });
   }
   return category;
+};
+
+const deleteCategoryService = async (id) => {
+  const category = await categoryModel.findById(id);
+  if (!category) {
+    throw new AppError('Category not found', STATUS_CODES.NOT_FOUND);
+  }
+
+  // Define a recursive function to delete category and its children
+  const deleteCategoryAndChildren = async (catId) => {
+    // Find all children
+    const children = await categoryModel.find({ parentId: catId });
+    for (const child of children) {
+      // Recursively delete children
+      await deleteCategoryAndChildren(child._id);
+    }
+
+    // Get current category to delete image
+    const currentCat = await categoryModel.findById(catId);
+    if (currentCat && currentCat.image) {
+      try {
+        await removeCatImgFromCloudinaryService(currentCat.image);
+      } catch (error) {
+        console.error(`Failed to delete image for category ${catId}:`, error);
+      }
+    }
+
+    // Delete the category document
+    await categoryModel.findByIdAndDelete(catId);
+  };
+
+  // Start the deletion process
+  await deleteCategoryAndChildren(id);
+
+  return true;
 };
 
 export {
@@ -196,4 +255,5 @@ export {
   updateCategoryService,
   getCatsByLevelService,
   blockCategoryService,
+  deleteCategoryService,
 };

@@ -9,6 +9,11 @@ const sizeSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  category: {
+    type: String,
+    enum: ["fashion", "footwear", "cosmetics"],
+    default: "fashion",
+  },
 });
 
 const sizeModel = mongoose.model('Size', sizeSchema);

@@ -6,6 +6,7 @@ import {
   getAllCategories,
   getCategoriesByLevel,
   updateCategory,
+  deleteCategory,
 } from '../../controllers/category.controller.js';
 import { asyncHandler } from '../../middlewares/Error/asyncHandler.js';
 import adminAuth from '../../middlewares/auth/adminAuth.js';
@@ -16,6 +17,7 @@ categoryRouter.post('/', adminAuth, upload.single('image'), asyncHandler(createC
 categoryRouter.get('/', asyncHandler(getAllCategories));
 categoryRouter.get('/:level', asyncHandler(getCategoriesByLevel));
 categoryRouter.patch('/edit/:id', adminAuth, upload.single('image'), asyncHandler(updateCategory));
-categoryRouter.patch('/block/:id', adminAuth, adminAuth, asyncHandler(blockCategory));
+categoryRouter.patch('/block/:id', adminAuth, asyncHandler(blockCategory));
+categoryRouter.delete('/:id', adminAuth, asyncHandler(deleteCategory));
 
 export default categoryRouter;

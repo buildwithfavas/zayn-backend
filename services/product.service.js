@@ -87,7 +87,7 @@ const getAllProductsService = async (query, page, perPage) => {
       name: {
         $in: capitalizeFirstLetter(query.category),
       },
-      isBlocked: false,
+      isListed: true,
     });
     if (cats.length) filter.categoryId = { $in: cats.map((c) => c._id) };
     else {
@@ -100,7 +100,7 @@ const getAllProductsService = async (query, page, perPage) => {
       name: {
         $in: capitalizeFirstLetter(query.subCategory),
       },
-      isBlocked: false,
+      isListed: true,
     });
     if (cats.length) filter.subCategoryId = { $in: cats.map((c) => c._id) };
     else {
@@ -113,7 +113,7 @@ const getAllProductsService = async (query, page, perPage) => {
       name: {
         $in: capitalizeFirstLetter(query.thirdCategory),
       },
-      isBlocked: false,
+      isListed: true,
     });
     if (cats.length) filter.thirdSubCategoryId = { $in: cats.map((c) => c._id) };
     else {
@@ -194,9 +194,9 @@ const getAllProductsService = async (query, page, perPage) => {
   if (!query.admin && query.admin !== 'true') {
     pipeline.push({
       $match: {
-        'category.isBlocked': false,
-        'subCategory.isBlocked': false,
-        'thirdCategory.isBlocked': false,
+        'category.isListed': true,
+        'subCategory.isListed': true,
+        'thirdCategory.isListed': true,
       },
     });
   }
@@ -405,9 +405,9 @@ const getProductByIdService = async (id) => {
     { $unwind: { path: '$thirdCategory', preserveNullAndEmptyArrays: true } },
     {
       $match: {
-        'category.isBlocked': false,
-        'subCategory.isBlocked': false,
-        'thirdCategory.isBlocked': false,
+        'category.isListed': true,
+        'subCategory.isListed': true,
+        'thirdCategory.isListed': true,
       },
     },
     {
@@ -636,9 +636,9 @@ const createRazorpayOrderService = async ({ amount, items, failed = false }) => 
       if (
         product.isUnlisted ||
         variant.isUnlisted ||
-        product.categoryId.isBlocked ||
-        product.subCategoryId.isBlocked ||
-        product.thirdSubCategoryId.isBlocked
+        !product.categoryId.isListed ||
+        !product.subCategoryId.isListed ||
+        !product.thirdSubCategoryId.isListed
       ) {
         throw new AppError(`${product.name} is not available now`, STATUS_CODES.BAD_REQUEST);
       }
@@ -658,9 +658,9 @@ const createRazorpayOrderService = async ({ amount, items, failed = false }) => 
       if (
         product.isUnlisted ||
         variant.isUnlisted ||
-        product.categoryId.isBlocked ||
-        product.subCategoryId.isBlocked ||
-        product.thirdSubCategoryId.isBlocked
+        !product.categoryId.isListed ||
+        !product.subCategoryId.isListed ||
+        !product.thirdSubCategoryId.isListed
       ) {
         throw new AppError(`${item.product.name} is not available now`, STATUS_CODES.BAD_REQUEST);
       }
