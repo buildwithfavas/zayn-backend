@@ -8,12 +8,52 @@ import mongoose from 'mongoose';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import Razorpay from 'razorpay';
-const addProductService = async (body, imagesByVariant) => {
-  const { name, description, brand, category, subCategory, thirdCategory, variants, isFeatured } =
-    body;
-  let catId = await categoryModel.findOne({ name: category });
-  let subCatId = await categoryModel.findOne({ name: subCategory });
-  let thirdCatId = await categoryModel.findOne({ name: thirdCategory });
+const addProductService = async (body, imagesByVariant, files) => {
+  const {
+    name,
+    description,
+    brand,
+    category,
+    subCategory,
+    thirdCategory,
+    variants,
+    isFeatured,
+    hasVariant,
+    price,
+    oldPrice,
+    stock,
+    discount,
+  } = body;
+
+  let catId = await categoryModel.findById(category);
+  let subCatId = await categoryModel.findById(subCategory);
+  let thirdCatId = await categoryModel.findById(thirdCategory);
+  const options = {
+    folder: 'products',
+    use_filename: true,
+    unique_filename: true,
+    overwrite: false,
+  };
+
+  const commonImagesObj = files.filter((f) => f.fieldname === 'images');
+
+  // Optimize: Parallel Uploads
+  console.time('Cloudinary Upload');
+  const commonImagesUrl = await Promise.all(
+    commonImagesObj.map(async (img) => {
+      try {
+        const result = await cloudinary.uploader.upload(img.path, options);
+        return result.secure_url;
+      } finally {
+        if (fs.existsSync(`uploads/${img.filename}`)) {
+          fs.unlinkSync(`uploads/${img.filename}`);
+        }
+      }
+    })
+  );
+  console.timeEnd('Cloudinary Upload');
+
+  console.time('Product DB Save');
   let newProduct = await productModel.create({
     name,
     description,
@@ -22,24 +62,35 @@ const addProductService = async (body, imagesByVariant) => {
     subCategoryId: subCatId?._id,
     thirdSubCategoryId: thirdCatId?._id,
     isFeatured,
+    hasVariant,
+    price,
+    oldPrice,
+    stock,
+    discount,
+    images: commonImagesUrl,
   });
+  console.timeEnd('Product DB Save');
 
   const variantDocs = [];
-  const options = {
-    folder: 'products',
-    use_filename: true,
-    unique_filename: true,
-    overwrite: false,
-  };
   for (let i = 0; i < variants.length; i++) {
     const v = variants[i];
     let imgUrlArr = [];
-    if (imagesByVariant[i]) {
-      for (let img of imagesByVariant[i]) {
-        const result = await cloudinary.uploader.upload(img.path, options);
-        fs.unlinkSync(`uploads/${img.filename}`);
-        imgUrlArr.push(result.secure_url);
-      }
+    if (imagesByVariant[i] && imagesByVariant[i].length > 0) {
+      // Optimize: Parallel Uploads for Variants
+      imgUrlArr = await Promise.all(
+        imagesByVariant[i].map(async (img) => {
+          try {
+            const result = await cloudinary.uploader.upload(img.path, options);
+            return result.secure_url;
+          } finally {
+            if (fs.existsSync(`uploads/${img.filename}`)) {
+              fs.unlinkSync(`uploads/${img.filename}`);
+            }
+          }
+        })
+      );
+    } else {
+      imgUrlArr = [...commonImagesUrl];
     }
     const discount = Math.round(((v.oldPrice - v.price) / v.oldPrice) * 100);
     const newVariant = await variantModel.create({
@@ -230,9 +281,29 @@ const getAllProductsService = async (query, page, perPage) => {
     {
       $addFields: {
         defaultVariant: {
-          $arrayElemAt: [{ $sortArray: { input: '$variants', sortBy: { price: 1 } } }, 0],
+          $cond: {
+            if: { $gt: [{ $size: '$variants' }, 0] },
+            then: {
+              $arrayElemAt: [{ $sortArray: { input: '$variants', sortBy: { price: 1 } } }, 0],
+            },
+            else: {
+              price: '$price',
+              oldPrice: '$oldPrice',
+              stock: '$stock',
+              images: '$images',
+              discount: '$discount',
+              _id: '$_id',
+              productId: '$_id',
+            },
+          },
         },
-        stock: { $sum: '$variants.stock' },
+        stock: {
+          $cond: {
+            if: { $gt: [{ $size: '$variants' }, 0] },
+            then: { $sum: '$variants.stock' },
+            else: '$stock',
+          },
+        },
       },
     }
   );
@@ -327,9 +398,9 @@ const updateProductService = async (id, body) => {
   const product = await productModel.findById(id);
   const { name, description, brand, isFeatured, category, subCategory, thirdCategory } = body;
   console.log(body);
-  let catId = await categoryModel.findOne({ name: category });
-  let subCatId = await categoryModel.findOne({ name: subCategory });
-  let thirdCatId = await categoryModel.findOne({ name: thirdCategory });
+  let catId = await categoryModel.findById(category);
+  let subCatId = await categoryModel.findById(subCategory);
+  let thirdCatId = await categoryModel.findById(thirdCategory);
 
   product.name = name;
   product.description = description;

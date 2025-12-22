@@ -32,7 +32,7 @@ const addProductsController = async (req, res) => {
       imagesByVariant[variantIndex].push(file);
     }
   });
-  let { newProduct, variantDocs } = await addProductService(body, imagesByVariant);
+  let { newProduct, variantDocs } = await addProductService(body, imagesByVariant, files);
   res.status(STATUS_CODES.CREATED).json({
     success: true,
     error: false,

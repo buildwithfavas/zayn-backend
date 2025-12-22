@@ -24,6 +24,19 @@ productsRouter.get('/', asyncHandler(getAllProductsController));
 productsRouter.post(
   '/',
   upload.any(),
+  (req, res, next) => {
+    // Normalize variants
+    if (!req.body.variants) {
+      req.body.variants = [];
+    } else if (typeof req.body.variants === 'string') {
+      try {
+        req.body.variants = JSON.parse(req.body.variants);
+      } catch (e) {
+        req.body.variants = [];
+      }
+    }
+    next();
+  },
   productValidation,
   validationErrorHandle,
   asyncHandler(addProductsController)

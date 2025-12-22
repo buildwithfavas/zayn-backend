@@ -145,12 +145,13 @@ const productValidation = [
     .withMessage('Brand is required.'),
 
   body('isFeatured').isBoolean().withMessage('isFeatured must be true or false.').toBoolean(),
-  body('variants').custom((value, { req }) => {
-    if (!req.body.variants || !Array.isArray(req.body.variants)) {
-      throw new Error('Variants must be an array.');
+  body('price').custom((value, { req }) => {
+    if (req.body.oldPrice && parseFloat(value) >= parseFloat(req.body.oldPrice)) {
+      throw new Error('Price must be less than Old Price.');
     }
     return true;
   }),
+  body('variants').isArray().withMessage('Variants must be an array.'),
   body('variants.*.size').optional().isString().withMessage('Size must be a string.'),
   body('variants.*.price')
     .notEmpty()
@@ -171,6 +172,16 @@ const productValidation = [
     .isInt({ min: 0 })
     .withMessage('Stock must be a non-negative integer.')
     .toInt(),
+
+  body('variants').custom((variants) => {
+    if (!Array.isArray(variants)) return true; // Handled by isArray check
+    variants.forEach((v, index) => {
+      if (v.oldPrice && parseFloat(v.price) >= parseFloat(v.oldPrice)) {
+        throw new Error(`Variant ${index + 1}: Price must be less than Old Price.`);
+      }
+    });
+    return true;
+  }),
 ];
 
 const editProductValidation = [
