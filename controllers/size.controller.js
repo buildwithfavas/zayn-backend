@@ -3,6 +3,7 @@ import {
   blockSizeService,
   editSizeService,
   getSizesService,
+  deleteSizeService,
 } from '../services/size.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 
@@ -48,4 +49,14 @@ const editSize = async (req, res) => {
   });
 };
 
-export { addSize, getSize, blockSize, editSize };
+const deleteSize = async (req, res) => {
+  const id = req.params.id;
+  await deleteSizeService(id);
+  return res.status(STATUS_CODES.OK).json({
+    success: true,
+    error: false,
+    message: 'Size Deleted Successfully',
+  });
+};
+
+export { addSize, getSize, blockSize, editSize, deleteSize };

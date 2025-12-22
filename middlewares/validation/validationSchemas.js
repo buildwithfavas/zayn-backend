@@ -111,8 +111,8 @@ const productValidation = [
     .trim()
     .notEmpty()
     .withMessage('Product name is required.')
-    .isLength({ min: 6 })
-    .withMessage('Product name must be at least 6 characters long.'),
+    .isLength({ min: 2, max: 20 })
+    .withMessage('Product name must be between 2 and 20 characters.'),
 
   body('description')
     .isString()

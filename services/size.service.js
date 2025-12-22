@@ -43,4 +43,12 @@ const editSizeService = async (id, label) => {
   return size;
 };
 
-export { addSizeService, getSizesService, blockSizeService, editSizeService };
+const deleteSizeService = async (id) => {
+  const size = await sizeModel.findByIdAndDelete(id);
+  if (!size) {
+    throw new AppError('Size not found', STATUS_CODES.NOT_FOUND);
+  }
+  return size;
+};
+
+export { addSizeService, getSizesService, blockSizeService, editSizeService, deleteSizeService };

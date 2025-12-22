@@ -12,32 +12,55 @@ cloudinary.config({
 });
 
 const createCategoryService = async (image, { name, parent, parentId: inputParentId, level }) => {
-  let isExist;
-  let parentCatName;
+  name = name.trim();
+  if (parent) parent = parent.trim();
+  // Determine parentId: use inputParentId if valid, otherwise resolve from parent name
+  let finalParentId = inputParentId;
+  let parentCatName = parent ? parent.toLowerCase() : undefined;
 
-  // If parent name is provided, use it. If parentId is provided, we might need to fetch the name for parentCatName field
-  if (parent) {
-    parentCatName = parent.toLowerCase();
-  } else if (inputParentId) {
-    const p = await categoryModel.findById(inputParentId);
-    if (p) parentCatName = p.name.toLowerCase();
+  if (!finalParentId && parent) {
+    const parentDoc = await categoryModel.findOne({ name: parent });
+    if (parentDoc) {
+      finalParentId = parentDoc._id;
+      if (!parentCatName) parentCatName = parentDoc.name.toLowerCase();
+    }
+  } else if (finalParentId && !parentCatName) {
+    // If we only have ID, fetch name for potential error message
+    const parentDoc = await categoryModel.findById(finalParentId);
+    if (parentDoc) parentCatName = parentDoc.name.toLowerCase();
   }
 
-  if (level == 'first') {
+  let isExist;
+  if (level === 'first') {
     isExist = await categoryModel.findOne({
       name: { $regex: `^${name}$`, $options: 'i' },
       level: 'first',
     });
   } else {
-    isExist = await categoryModel.findOne({
+    // For nested categories, check existence within the same parent
+    const query = {
       name: { $regex: `^${name}$`, $options: 'i' },
       level,
-      parentCatName,
-    });
+    };
+    if (finalParentId) {
+      query.parentId = finalParentId;
+    } else if (parentCatName) {
+      // Fallback
+      query.parentCatName = parentCatName;
+    }
+    isExist = await categoryModel.findOne(query);
   }
+
   if (isExist) {
-    throw new AppError('Category already exist', STATUS_CODES.CONFLICT);
+    let errorMsg = `Category '${name}' already exists`;
+    if (level !== 'first') {
+      if (parentCatName) {
+        errorMsg += ` under parent category '${parentCatName}'`;
+      }
+    }
+    throw new AppError(errorMsg, STATUS_CODES.CONFLICT);
   }
+
   let imageUrl = '';
   const options = {
     use_filename: true,
@@ -57,13 +80,6 @@ const createCategoryService = async (image, { name, parent, parentId: inputParen
     });
   } else {
     console.log('Service - No image provided to upload');
-  }
-
-  // Determine parentId: use inputParentId if valid, otherwise resolve from parent name
-  let finalParentId = inputParentId;
-  if (!finalParentId && parent) {
-    const p = await categoryModel.findOne({ name: parent });
-    if (p) finalParentId = p._id;
   }
 
   const category = new categoryModel({
@@ -110,29 +126,58 @@ const removeCatImgFromCloudinaryService = async (catImage) => {
 };
 
 const updateCategoryService = async (id, image, { name, parent }) => {
-  const category = await categoryModel.findById(id);
+  name = name.trim();
+  if (parent) parent = parent.trim();
 
-  let imageUrl = null;
+  const category = await categoryModel.findById(id);
+  if (!category) {
+    throw new AppError('Category not found', STATUS_CODES.NOT_FOUND);
+  }
+
+  // Determine the target parent for validation
+  let targetParentId = category.parentId;
+  let targetParentName = category.parentCatName;
+
+  if (parent) {
+    const parentDoc = await categoryModel.findOne({
+      name: { $regex: `^${parent}$`, $options: 'i' },
+    }); // precise match
+    if (parentDoc) {
+      targetParentId = parentDoc._id;
+      targetParentName = parentDoc.name.toLowerCase();
+    }
+  }
+
   let isExist;
   if (category.level == 'first') {
-    isExist = await categoryModel.find({
+    isExist = await categoryModel.findOne({
       name: { $regex: `^${name}$`, $options: 'i' },
       level: 'first',
+      _id: { $ne: id },
     });
-  } else if (category.level == 'second') {
-    isExist = await categoryModel.find({
+  } else {
+    const query = {
       name: { $regex: `^${name}$`, $options: 'i' },
-      level: 'second',
-    });
-  } else if (category.level == 'third') {
-    isExist = await categoryModel.find({
-      name: { $regex: `^${name}$`, $options: 'i' },
-      level: 'third',
-    });
+      level: category.level,
+      _id: { $ne: id },
+    };
+    if (targetParentId) {
+      query.parentId = targetParentId;
+    } else if (targetParentName) {
+      query.parentCatName = targetParentName;
+    }
+    isExist = await categoryModel.findOne(query);
   }
-  if (isExist.length > 0 && name != category.name) {
-    throw new AppError('Category already exist', STATUS_CODES.CONFLICT);
+
+  if (isExist) {
+    let errorMsg = `Category '${name}' already exists`;
+    if (category.level !== 'first' && targetParentName) {
+      errorMsg += ` under parent category '${targetParentName}'`;
+    }
+    throw new AppError(errorMsg, STATUS_CODES.CONFLICT);
   }
+
+  let imageUrl = null;
   if (image) {
     const catImage = category.image;
     if (catImage) {
@@ -149,12 +194,7 @@ const updateCategoryService = async (id, image, { name, parent }) => {
       fs.unlinkSync(`uploads/${image.filename}`);
     });
   }
-  let parentCatName;
-  let parentCat;
-  if (parent) {
-    parentCatName = parent.toLowerCase();
-    parentCat = await categoryModel.findOne({ name: parent });
-  }
+
   const updatedData = {
     name,
   };
@@ -165,28 +205,70 @@ const updateCategoryService = async (id, image, { name, parent }) => {
 
   if (parent) {
     updatedData.parentCatName = parent.toLowerCase();
+    // Update parentId if changing parent
     if (category.level != 'first') {
-      updatedData.parentId = parentCat._id;
+      // Look up parent again or use what we found above
+      // using findOne again safely or reusing targetParentId calculated above
+      updatedData.parentId = targetParentId;
     }
   }
-  await categoryModel.updateMany(
-    { parentCatName: category.name.toLowerCase() },
-    { parentCatName: name.toLowerCase() }
-  );
+
+  // Update children's parentCatName if this category is renamed
+  if (name.toLowerCase() !== category.name.toLowerCase()) {
+    await categoryModel.updateMany({ parentId: id }, { parentCatName: name.toLowerCase() });
+  }
+
   const updated = await categoryModel.findByIdAndUpdate(id, updatedData, { new: true });
   return updated;
 };
 
 const getCatsByLevelService = async (level, page, perPage, search, filterStatus) => {
   let filter = { level: level };
+
+  // Search
   if (search) {
     filter.name = { $regex: search, $options: 'i' };
   }
-  if (filterStatus === 'active') {
-    filter.isListed = true;
-  } else if (filterStatus === 'blocked') {
-    filter.isListed = false;
+
+  // Status Filter with Hierarchy
+  if (filterStatus === 'active' || filterStatus === 'blocked') {
+    const isListed = filterStatus === 'active';
+    // console.log(`[Hierarchical Filter] Status: ${filterStatus} (isListed: ${isListed})`);
+
+    // 1. Find directly matching docs (any level)
+    const directMatches = await categoryModel.find({ isListed });
+    // console.log(`[Hierarchical Filter] Direct Matches: ${directMatches.length}`);
+
+    if (directMatches.length > 0) {
+      const relevantIds = new Set(directMatches.map((d) => d._id.toString()));
+
+      // 2. Find Parents (Level 2 & 1)
+      const parentIds = [
+        ...new Set(directMatches.map((d) => d.parentId && d.parentId.toString()).filter(Boolean)),
+      ];
+
+      if (parentIds.length > 0) {
+        const parents = await categoryModel.find({ _id: { $in: parentIds } });
+        parents.forEach((p) => relevantIds.add(p._id.toString()));
+
+        // 3. Find Grandparents (Level 1)
+        const grandParentIds = [
+          ...new Set(parents.map((p) => p.parentId && p.parentId.toString()).filter(Boolean)),
+        ];
+        if (grandParentIds.length > 0) {
+          const grandParents = await categoryModel.find({ _id: { $in: grandParentIds } });
+          grandParents.forEach((gp) => relevantIds.add(gp._id.toString()));
+        }
+      }
+
+      // Apply the ID filter
+      filter._id = { $in: Array.from(relevantIds) };
+    } else {
+      // If filtering by status and no matches found, force empty result
+      return { categories: [], totalPosts: 0, totalPages: 0 };
+    }
   }
+
   if ((perPage, page)) {
     const totalPosts = await categoryModel.countDocuments(filter);
     const categories = await categoryModel

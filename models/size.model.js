@@ -11,8 +11,7 @@ const sizeSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ["fashion", "footwear", "cosmetics"],
-    default: "fashion",
+    required: true,
   },
 });
 
