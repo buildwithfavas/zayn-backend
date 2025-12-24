@@ -10,6 +10,7 @@ import {
   unlistProductService,
   unlistVariantService,
   updateProductService,
+  deleteProductService,
 } from '../services/product.service.js';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 cloudinary.config({
@@ -63,7 +64,8 @@ const getAllProductsController = async (req, res) => {
 const updateProductController = async (req, res) => {
   const id = req.params.id;
   const body = req.body;
-  const product = await updateProductService(id, body);
+  const files = req.files;
+  const product = await updateProductService(id, body, files);
   return res.status(STATUS_CODES.OK).json({
     success: true,
     error: false,
@@ -78,6 +80,16 @@ const unlistProductController = async (req, res) => {
     success: true,
     error: false,
     message: product.isUnlisted ? 'Product Unlisted Successfully' : 'Product Listed Successfully',
+  });
+};
+
+const deleteProductController = async (req, res) => {
+  const id = req.params.id;
+  await deleteProductService(id);
+  return res.status(STATUS_CODES.OK).json({
+    success: true,
+    error: false,
+    message: 'Product Deleted Successfully',
   });
 };
 
@@ -112,6 +124,13 @@ const getProductByIdController = async (req, res) => {
 const unlistVariantController = async (req, res) => {
   const id = req.params.id;
   const variant = await unlistVariantService(id);
+  if (!variant) {
+    return res.status(STATUS_CODES.NOT_FOUND).json({
+      success: false,
+      error: true,
+      message: 'Variant Not Found',
+    });
+  }
   return res.status(STATUS_CODES.OK).json({
     success: true,
     error: false,
@@ -158,6 +177,7 @@ export {
   getAllProductsController,
   updateProductController,
   unlistProductController,
+  deleteProductController,
   getVariantsController,
   getProductByIdController,
   unlistVariantController,

@@ -4,10 +4,78 @@ import productModel from '../models/product.model.js';
 import { v2 as cloudinary } from 'cloudinary';
 import variantModel from '../models/variant.model.js';
 import fs from 'fs';
+import path from 'path';
 import mongoose from 'mongoose';
 import { STATUS_CODES } from '../utils/statusCodes.js';
 import { applyBestOffer } from '../utils/applyBestOffer.js';
 import Razorpay from 'razorpay';
+// Helper to check for duplicates
+const checkDuplicateProduct = async (
+  name,
+  catId,
+  subCatId,
+  thirdCatId,
+  variantsList,
+  excludeId = null
+) => {
+  const query = {
+    name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+    categoryId: catId,
+    subCategoryId: subCatId,
+    thirdSubCategoryId: thirdCatId,
+    isUnlisted: false,
+  };
+  if (excludeId) {
+    query._id = { $ne: excludeId };
+  }
+
+  console.log('--- checkDuplicateProduct Debug ---');
+  console.log('Query Name:', name);
+  console.log('Query Cats:', catId, subCatId, thirdCatId);
+  console.log('Constructed Query:', query);
+
+  const duplicates = await productModel.find(query).populate('variants');
+  console.log('Duplicates Found:', duplicates.length);
+
+  if (duplicates.length > 0) {
+    // If simple product (no variants requested), and we found a duplicate (which presumably is also simple or we treat Name+Cat collision as enough):
+    // Actually user specified "same variant".
+    // If New is Simple(No Variant) and Existing has Variants: strictly speaking not "same variant".
+    // If New has Variants and Existing is Simple: not same.
+    // If New has Variants and Existing has Variants: Check overlap.
+
+    // Normalize new attributes
+    // variantsList is array of objects { attributeValue, ... }
+    const newAttributes = variantsList ? variantsList.map((v) => v.attributeValue) : [];
+    console.log('New Attributes:', newAttributes);
+
+    for (const dup of duplicates) {
+      console.log('Checking Dup:', dup.name, 'HasVariant:', dup.hasVariant);
+      if (!dup.hasVariant && (!variantsList || variantsList.length === 0)) {
+        throw new AppError(
+          'A simple product with this name and category already exists.',
+          STATUS_CODES.CONFLICT
+        );
+      }
+
+      if (dup.hasVariant && variantsList && variantsList.length > 0) {
+        const existingAttributes = dup.variants.map((v) => v.attributeValue);
+        console.log('Existing Attributes:', existingAttributes);
+        // Check overlap
+        const hasOverlap = newAttributes.some((attr) => existingAttributes.includes(attr));
+        console.log('Overlap Found:', hasOverlap);
+
+        if (hasOverlap) {
+          throw new AppError(
+            `Product with name '${name}' and variant(s) already exists.`,
+            STATUS_CODES.CONFLICT
+          );
+        }
+      }
+    }
+  }
+};
+
 const addProductService = async (body, imagesByVariant, files) => {
   const {
     name,
@@ -25,9 +93,33 @@ const addProductService = async (body, imagesByVariant, files) => {
     discount,
   } = body;
 
-  let catId = await categoryModel.findById(category);
-  let subCatId = await categoryModel.findById(subCategory);
-  let thirdCatId = await categoryModel.findById(thirdCategory);
+  let parsedVariants = [];
+  if (hasVariant) {
+    if (typeof variants === 'string') {
+      try {
+        parsedVariants = JSON.parse(variants);
+      } catch (e) {
+        parsedVariants = [];
+      }
+    } else {
+      parsedVariants = variants;
+    }
+  }
+
+  // Check Duplicates
+  // Note: We use findById for cat IDs to ensure valid ObjectIds in query
+  const catId = await categoryModel.findById(category);
+  const subCatId = await categoryModel.findById(subCategory);
+  const thirdCatId = thirdCategory ? await categoryModel.findById(thirdCategory) : null;
+
+  await checkDuplicateProduct(
+    name,
+    catId?._id,
+    subCatId?._id,
+    thirdCatId?._id,
+    hasVariant ? parsedVariants : null
+  );
+
   const options = {
     folder: 'products',
     use_filename: true,
@@ -71,43 +163,61 @@ const addProductService = async (body, imagesByVariant, files) => {
   });
   console.timeEnd('Product DB Save');
 
-  const variantDocs = [];
-  for (let i = 0; i < variants.length; i++) {
-    const v = variants[i];
-    let imgUrlArr = [];
-    if (imagesByVariant[i] && imagesByVariant[i].length > 0) {
-      // Optimize: Parallel Uploads for Variants
-      imgUrlArr = await Promise.all(
-        imagesByVariant[i].map(async (img) => {
-          try {
-            const result = await cloudinary.uploader.upload(img.path, options);
-            return result.secure_url;
-          } finally {
-            if (fs.existsSync(`uploads/${img.filename}`)) {
-              fs.unlinkSync(`uploads/${img.filename}`);
+  try {
+    const variantDocs = [];
+
+    // Parallelize Variant Processing
+    const variantPromises = parsedVariants.map(async (v, i) => {
+      let imgUrlArr = [];
+      if (imagesByVariant[i] && imagesByVariant[i].length > 0) {
+        // Upload images for this specific variant
+        imgUrlArr = await Promise.all(
+          imagesByVariant[i].map(async (img) => {
+            try {
+              const result = await cloudinary.uploader.upload(img.path, options);
+              return result.secure_url;
+            } finally {
+              if (fs.existsSync(`uploads/${img.filename}`)) {
+                fs.unlinkSync(`uploads/${img.filename}`);
+              }
             }
-          }
-        })
-      );
-    } else {
-      imgUrlArr = [...commonImagesUrl];
-    }
-    const discount = Math.round(((v.oldPrice - v.price) / v.oldPrice) * 100);
-    const newVariant = await variantModel.create({
-      productId: newProduct._id,
-      color: v.color,
-      size: v.size,
-      weight: v.weight,
-      price: v.price,
-      oldPrice: v.oldPrice,
-      stock: v.stock,
-      images: imgUrlArr,
-      discount,
+          })
+        );
+      } else {
+        imgUrlArr = [...commonImagesUrl];
+      }
+
+      const discount = Math.round(((v.oldPrice - v.price) / v.oldPrice) * 100);
+      const newVariant = await variantModel.create({
+        productId: newProduct._id,
+        attributeValue: v.attributeValue,
+        price: v.price,
+        oldPrice: v.oldPrice,
+        stock: v.stock,
+        images: imgUrlArr,
+        discount,
+      });
+
+      return newVariant;
     });
-    await productModel.findByIdAndUpdate(newProduct._id, { $push: { variants: newVariant._id } });
-    variantDocs.push(newVariant);
+
+    const variantsResult = await Promise.all(variantPromises);
+    variantDocs.push(...variantsResult);
+
+    // Single DB Update: push all variant IDs at once
+    const variantIds = variantsResult.map((v) => v._id);
+    if (variantIds.length > 0) {
+      await productModel.findByIdAndUpdate(newProduct._id, {
+        $push: { variants: { $each: variantIds } },
+      });
+    }
+
+    return { newProduct, variantDocs };
+  } catch (error) {
+    // Rollback: delete the created product if variant processing fails
+    await productModel.findByIdAndDelete(newProduct._id);
+    throw error;
   }
-  return { newProduct, variantDocs };
 };
 
 const getAllProductsService = async (query, page, perPage) => {
@@ -242,71 +352,103 @@ const getAllProductsService = async (query, page, perPage) => {
     { $unwind: { path: '$subCategory', preserveNullAndEmptyArrays: true } },
     { $unwind: { path: '$thirdCategory', preserveNullAndEmptyArrays: true } },
   ];
-  if (!query.admin && query.admin !== 'true') {
-    pipeline.push({
-      $match: {
-        'category.isListed': true,
-        'subCategory.isListed': true,
-        'thirdCategory.isListed': true,
-      },
-    });
-  }
-  pipeline.push(
-    {
-      $addFields: {
-        totalVariants: { $size: '$variants' },
-        inStockVariants: {
-          $filter: {
-            input: '$variants',
-            as: 'variant',
-            cond: { $gt: ['$$variant.stock', 0] },
-          },
-        },
-      },
-    },
-    {
-      $addFields: {
-        variants: {
-          $cond: {
-            if: {
-              $and: [{ $gt: ['$totalVariants', 1] }, { $gt: [{ $size: '$inStockVariants' }, 0] }],
-            },
-            then: '$inStockVariants',
-            else: '$variants',
-          },
-        },
-      },
-    },
-
-    {
-      $addFields: {
-        defaultVariant: {
-          $cond: {
-            if: { $gt: [{ $size: '$variants' }, 0] },
-            then: {
-              $arrayElemAt: [{ $sortArray: { input: '$variants', sortBy: { price: 1 } } }, 0],
-            },
-            else: {
-              price: '$price',
-              oldPrice: '$oldPrice',
-              stock: '$stock',
-              images: '$images',
-              discount: '$discount',
-              _id: '$_id',
-              productId: '$_id',
+  // ... pipeline up to lookups ...
+  if (query.admin === 'true') {
+    // Admin: Show every variant as a separate row
+    pipeline.push(
+      { $unwind: { path: '$variants', preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          defaultVariant: {
+            $cond: {
+              if: { $and: ['$variants', { $eq: [{ $type: '$variants' }, 'object'] }] },
+              then: '$variants',
+              else: {
+                price: '$price',
+                oldPrice: '$oldPrice',
+                stock: '$stock',
+                images: '$images',
+                discount: '$discount',
+                _id: '$_id',
+                productId: '$_id',
+              },
             },
           },
+          // Ensure name clearly indicates variant for Admin clarity?
+          // The frontend just shows name. Maybe we can append variant info?
+          // User didn't explicitly ask to rename, just "shown as different products".
+          // Frontend columns (Size/Color) usually show variant info if available.
         },
-        stock: {
-          $cond: {
-            if: { $gt: [{ $size: '$variants' }, 0] },
-            then: { $sum: '$variants.stock' },
-            else: '$stock',
-          },
+      }
+    );
+  } else {
+    // User: Consolidate variants (Logic as before)
+    if (!query.admin && query.admin !== 'true') {
+      pipeline.push({
+        $match: {
+          'category.isListed': true,
+          'subCategory.isListed': true,
+          'thirdCategory.isListed': true,
         },
-      },
+      });
     }
-  );
+    pipeline.push(
+      {
+        $addFields: {
+          totalVariants: { $size: '$variants' },
+          inStockVariants: {
+            $filter: {
+              input: '$variants',
+              as: 'variant',
+              cond: { $gt: ['$$variant.stock', 0] },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          variants: {
+            $cond: {
+              if: {
+                $and: [{ $gt: ['$totalVariants', 1] }, { $gt: [{ $size: '$inStockVariants' }, 0] }],
+              },
+              then: '$inStockVariants',
+              else: '$variants',
+            },
+          },
+        },
+      },
+
+      {
+        $addFields: {
+          defaultVariant: {
+            $cond: {
+              if: { $gt: [{ $size: '$variants' }, 0] },
+              then: {
+                $arrayElemAt: [{ $sortArray: { input: '$variants', sortBy: { price: 1 } } }, 0],
+              },
+              else: {
+                price: '$price',
+                oldPrice: '$oldPrice',
+                stock: '$stock',
+                images: '$images',
+                discount: '$discount',
+                _id: '$_id',
+                productId: '$_id',
+              },
+            },
+          },
+          stock: {
+            $cond: {
+              if: { $gt: [{ $size: '$variants' }, 0] },
+              then: { $sum: '$variants.stock' },
+              else: '$stock',
+            },
+          },
+        },
+      }
+    );
+  }
 
   if (query.availability && query.availability === 'true') {
     pipeline.push({
@@ -394,13 +536,101 @@ const getAllProductsService = async (query, page, perPage) => {
   return { products };
 };
 
-const updateProductService = async (id, body) => {
-  const product = await productModel.findById(id);
-  const { name, description, brand, isFeatured, category, subCategory, thirdCategory } = body;
-  console.log(body);
+const updateProductService = async (id, body, files) => {
+  const product = await productModel.findById(id).populate('variants');
+  const {
+    name,
+    description,
+    brand,
+    isFeatured,
+    category,
+    subCategory,
+    thirdCategory,
+    price,
+    oldPrice,
+    stock,
+    discount,
+    images = [],
+  } = body;
+
   let catId = await categoryModel.findById(category);
   let subCatId = await categoryModel.findById(subCategory);
   let thirdCatId = await categoryModel.findById(thirdCategory);
+
+  // Dup Check for Edit
+  // We need to check if current variants collide with other product.
+  // Note: body doesn't contain 'variants' usually in Edit mode via FormData if standard flow.
+  // However, checkDuplicateProduct requires array of attributeValues.
+  // We should pass product.variants (existing variants).
+  // But wait, if we are RENAMING "Shirt A" -> "Shirt B", we check against "Shirt B".
+  // And we pass "Shirt A"'s variants to see if "Shirt B" already has them?
+
+  // Logic: "Admin trying to add a product (or edit) ... Don't allow if Name+Cat+Variant match existing."
+  // So if I rename "Shirt A"(Small) to "Shirt B"(Small), and "Shirt B"(Small) exists -> BLOCK.
+
+  // Parse variants from body if present (Frontend now sends it in Edit mode too)
+  let parsedVariants = [];
+  if (body.variants) {
+    if (typeof body.variants === 'string') {
+      try {
+        parsedVariants = JSON.parse(body.variants);
+      } catch (e) {
+        parsedVariants = [];
+      }
+    } else if (Array.isArray(body.variants)) {
+      parsedVariants = body.variants;
+    }
+  }
+
+  // Determine which variants to check against
+  // If we are updating to simple (hasVariant=false), check as simple.
+  // If updating to variant (hasVariant=true), use the NEW variants from body.
+  // If body.variants is missing (legacy/error), fallback to currentVariants?
+  // But if editing simple -> variant, currentVariants is empty, so we MUST use body.variants.
+
+  const targetVariants =
+    String(body.hasVariant) === 'true'
+      ? parsedVariants.length > 0
+        ? parsedVariants
+        : currentVariants
+      : [];
+  // If simple, targetVariants is empty []
+
+  await checkDuplicateProduct(
+    name,
+    catId?._id,
+    subCatId?._id,
+    thirdCatId?._id,
+    targetVariants,
+    id // Check products OTHER than self
+  );
+
+  // Handle Images
+  let imageArr = Array.isArray(images) ? [...images] : [images].filter(Boolean);
+  const currentImages = product.images || [];
+
+  // Find images that were removed
+  const removedImages = currentImages.filter((img) => !imageArr.includes(img));
+  for (let img of removedImages) {
+    // Extract public_id/filename from URL for deletion if needed
+  }
+
+  // Upload new files
+  if (files && files.length > 0) {
+    const options = {
+      folder: 'products',
+      use_filename: true,
+      unique_filename: true,
+      overwrite: false,
+    };
+    for (let f of files) {
+      const result = await cloudinary.uploader.upload(f.path, options);
+      imageArr.push(result.secure_url);
+      if (fs.existsSync(`uploads/${f.filename}`)) {
+        fs.unlinkSync(`uploads/${f.filename}`);
+      }
+    }
+  }
 
   product.name = name;
   product.description = description;
@@ -410,7 +640,47 @@ const updateProductService = async (id, body) => {
   product.thirdSubCategoryId = thirdCatId?._id;
   product.isFeatured = isFeatured;
 
+  // Handle hasVariant transition
+  // Frontend now sends 'hasVariant' as string "true"/"false" or boolean
+  // If undefined, we assume no change (though frontend should send it).
+  if (body.hasVariant !== undefined) {
+    const newHasVariant = String(body.hasVariant) === 'true';
+
+    if (product.hasVariant && !newHasVariant) {
+      // Switching from Variant -> Simple
+      // 1. Unlist or Delete existing variants
+      // We can empty the variants array reference in Product
+      // And maybe unlist them in Variant collection?
+      if (product.variants && product.variants.length > 0) {
+        // Unlist them
+        await variantModel.updateMany(
+          { _id: { $in: product.variants } },
+          { $set: { isUnlisted: true } }
+        );
+      }
+      product.variants = [];
+    } else if (!product.hasVariant && newHasVariant) {
+      // Switching from Simple -> Variant
+      // Clear simple product fields to avoid confusion if logic falls back to them
+      product.price = 0;
+      product.oldPrice = 0;
+      product.discount = 0;
+      product.stock = 0;
+    }
+    product.hasVariant = newHasVariant;
+  }
+
+  // Update simple product fields
+  // If switching to simple, these should be populated by frontend
+  if (price !== undefined) product.price = price;
+  if (oldPrice !== undefined) product.oldPrice = oldPrice;
+  if (stock !== undefined) product.stock = stock;
+  if (discount !== undefined) product.discount = discount;
+
+  product.images = imageArr;
+
   await product.save();
+  return product;
 };
 
 const unlistProductService = async (id) => {
@@ -419,6 +689,15 @@ const unlistProductService = async (id) => {
     [{ $set: { isUnlisted: { $not: '$isUnlisted' } } }],
     { new: true }
   );
+  return product;
+};
+
+const deleteProductService = async (id) => {
+  const product = await productModel.findByIdAndDelete(id);
+  // Also delete associated variants
+  if (product && product.variants && product.variants.length > 0) {
+    await variantModel.deleteMany({ _id: { $in: product.variants } });
+  }
   return product;
 };
 
@@ -474,13 +753,17 @@ const getProductByIdService = async (id) => {
     { $unwind: { path: '$category', preserveNullAndEmptyArrays: true } },
     { $unwind: { path: '$subCategory', preserveNullAndEmptyArrays: true } },
     { $unwind: { path: '$thirdCategory', preserveNullAndEmptyArrays: true } },
-    {
+    /* {
       $match: {
         'category.isListed': true,
         'subCategory.isListed': true,
-        'thirdCategory.isListed': true,
+        $or: [
+          { thirdCategory: { $exists: false } },
+          { thirdCategory: { $eq: null } },
+          { 'thirdCategory.isListed': true },
+        ],
       },
-    },
+    }, */
     {
       $addFields: {
         totalVariants: { $size: '$variants' },
@@ -508,6 +791,11 @@ const getProductByIdService = async (id) => {
                       ],
                     },
                     then: '$inStockVariants',
+                    // If variants exist but logic falls through, use variants.
+                    // But if NO variants exist ($size variants == 0), we want fallback.
+                    // Actually, the original logic for 'else' was '$variants'.
+                    // If $variants is empty, we get empty array, and arrayElemAt 0 gives null.
+                    // We need to check if variants exist at all.
                     else: '$variants',
                   },
                 },
@@ -517,8 +805,34 @@ const getProductByIdService = async (id) => {
             0,
           ],
         },
-        stock: {
+        variantStockSum: {
           $sum: '$variants.stock',
+        },
+      },
+    },
+    {
+      $addFields: {
+        defaultVariant: {
+          $cond: {
+            if: { $gt: [{ $size: '$variants' }, 0] },
+            then: '$defaultVariant',
+            else: {
+              price: '$price',
+              oldPrice: '$oldPrice',
+              stock: '$stock',
+              images: '$images',
+              discount: '$discount',
+              _id: '$_id',
+              productId: '$_id',
+            },
+          },
+        },
+        stock: {
+          $cond: {
+            if: { $gt: [{ $size: '$variants' }, 0] },
+            then: '$variantStockSum', // Use the calculated sum
+            else: '$stock', // Use the original root stock
+          },
         },
       },
     },
@@ -536,7 +850,6 @@ const getProductByIdService = async (id) => {
             sortBy: { price: 1 },
           },
         },
-        stock: { $sum: '$variants.stock' },
       },
     },
   ];
@@ -548,32 +861,33 @@ const getProductByIdService = async (id) => {
   const product = products[0];
   console.log(product);
   const groupedVariants = {};
+  const variantsToProcess = [product.defaultVariant, ...product.variants].filter(Boolean);
   const variants = await Promise.all(
-    [product.defaultVariant, ...product.variants].map(
-      async (variant) => await applyBestOffer(variant)
-    )
+    variantsToProcess.map(async (variant) => await applyBestOffer(variant))
   );
   console.log(variants);
-  variants.forEach((variant) => {
-    const { color, size, price, stock, _id, images, oldPrice, discount } = variant;
+  if (product.hasVariant) {
+    variants.forEach((variant) => {
+      const { color, size, price, stock, _id, images, oldPrice, discount } = variant;
 
-    if (!groupedVariants[color]) {
-      groupedVariants[color] = {
+      if (!groupedVariants[color]) {
+        groupedVariants[color] = {
+          color,
+          variants: [],
+        };
+      }
+      groupedVariants[color].variants.push({
+        size,
+        price,
+        stock,
+        oldPrice,
+        _id,
+        images,
+        discount,
         color,
-        variants: [],
-      };
-    }
-    groupedVariants[color].variants.push({
-      size,
-      price,
-      stock,
-      oldPrice,
-      _id,
-      images,
-      discount,
-      color,
+      });
     });
-  });
+  }
 
   return { groupedVariants, product };
 };
@@ -626,7 +940,7 @@ const editVariantService = async (id, body, imageFiles) => {
 };
 
 const addVariantService = async (id, body, files) => {
-  const { stock, size, color, price, oldPrice } = body;
+  const { stock, attributeValue, price, oldPrice } = body;
   let imageArr = [];
   if (files) {
     const options = {
@@ -644,14 +958,22 @@ const addVariantService = async (id, body, files) => {
   const variant = await variantModel.create({
     productId: id,
     stock,
-    size,
-    color,
+    attributeValue,
     images: imageArr,
     discount,
     price,
     oldPrice,
   });
-  await productModel.findByIdAndUpdate(id, { $push: { variants: variant._id } });
+  await productModel.findByIdAndUpdate(id, {
+    $push: { variants: variant._id },
+    $set: {
+      hasVariant: true,
+      price: 0,
+      stock: 0,
+      oldPrice: 0,
+      discount: 0,
+    },
+  });
   return variant;
 };
 
@@ -767,4 +1089,5 @@ export {
   addVariantService,
   getSearchSuggestionsService,
   createRazorpayOrderService,
+  deleteProductService,
 };

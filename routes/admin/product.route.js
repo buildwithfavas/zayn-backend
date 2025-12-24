@@ -6,6 +6,7 @@ import {
   getSearchSuggestions,
   unlistProductController,
   updateProductController,
+  deleteProductController,
 } from '../../controllers/product.controller.js';
 import upload from '../../middlewares/multer/multer.js';
 import { asyncHandler } from '../../middlewares/Error/asyncHandler.js';
@@ -43,12 +44,14 @@ productsRouter.post(
 );
 productsRouter.put(
   '/:id',
+  upload.any(),
   editProductValidation,
   validationErrorHandle,
   adminAuth,
   asyncHandler(updateProductController)
 );
 productsRouter.get('/:id', asyncHandler(getProductByIdController));
+productsRouter.delete('/:id', adminAuth, asyncHandler(deleteProductController));
 productsRouter.patch('/unlist/:id', adminAuth, asyncHandler(unlistProductController));
 productsRouter.get('/search/suggestions', asyncHandler(getSearchSuggestions));
 export default productsRouter;

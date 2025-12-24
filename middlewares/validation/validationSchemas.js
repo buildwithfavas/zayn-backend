@@ -111,8 +111,8 @@ const productValidation = [
     .trim()
     .notEmpty()
     .withMessage('Product name is required.')
-    .isLength({ min: 2, max: 20 })
-    .withMessage('Product name must be between 2 and 20 characters.'),
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Product name must be between 2 and 100 characters.'),
 
   body('description')
     .isString()
@@ -146,8 +146,8 @@ const productValidation = [
 
   body('isFeatured').isBoolean().withMessage('isFeatured must be true or false.').toBoolean(),
   body('price').custom((value, { req }) => {
-    if (req.body.oldPrice && parseFloat(value) >= parseFloat(req.body.oldPrice)) {
-      throw new Error('Price must be less than Old Price.');
+    if (req.body.oldPrice && parseFloat(value) > parseFloat(req.body.oldPrice)) {
+      throw new Error('Price must be less than or equal to Old Price.');
     }
     return true;
   }),
@@ -176,8 +176,8 @@ const productValidation = [
   body('variants').custom((variants) => {
     if (!Array.isArray(variants)) return true; // Handled by isArray check
     variants.forEach((v, index) => {
-      if (v.oldPrice && parseFloat(v.price) >= parseFloat(v.oldPrice)) {
-        throw new Error(`Variant ${index + 1}: Price must be less than Old Price.`);
+      if (v.oldPrice && parseFloat(v.price) > parseFloat(v.oldPrice)) {
+        throw new Error(`Variant ${index + 1}: Price must be less than or equal to Old Price.`);
       }
     });
     return true;
