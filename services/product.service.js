@@ -624,10 +624,15 @@ const updateProductService = async (id, body, files) => {
       overwrite: false,
     };
     for (let f of files) {
-      const result = await cloudinary.uploader.upload(f.path, options);
-      imageArr.push(result.secure_url);
-      if (fs.existsSync(`uploads/${f.filename}`)) {
-        fs.unlinkSync(`uploads/${f.filename}`);
+      for (let f of files) {
+        try {
+          const result = await cloudinary.uploader.upload(f.path, options);
+          imageArr.push(result.secure_url);
+        } finally {
+          if (fs.existsSync(`uploads/${f.filename}`)) {
+            fs.unlinkSync(`uploads/${f.filename}`);
+          }
+        }
       }
     }
   }
@@ -919,9 +924,14 @@ const editVariantService = async (id, body, imageFiles) => {
       overwrite: false,
     };
     for (let img of imageFiles) {
-      const result = await cloudinary.uploader.upload(img.path, options);
-      imageArr.push(result.secure_url);
-      fs.unlinkSync(`uploads/${img.filename}`);
+      try {
+        const result = await cloudinary.uploader.upload(img.path, options);
+        imageArr.push(result.secure_url);
+      } finally {
+        if (fs.existsSync(`uploads/${img.filename}`)) {
+          fs.unlinkSync(`uploads/${img.filename}`);
+        }
+      }
     }
   }
   const discount = Math.round(((oldPrice - price) / oldPrice) * 100);
@@ -949,9 +959,14 @@ const addVariantService = async (id, body, files) => {
       overwrite: false,
     };
     for (let f of files) {
-      const res = await cloudinary.uploader.upload(f.path, options);
-      imageArr.push(res.secure_url);
-      fs.unlinkSync(`uploads/${f.filename}`);
+      try {
+        const res = await cloudinary.uploader.upload(f.path, options);
+        imageArr.push(res.secure_url);
+      } finally {
+        if (fs.existsSync(`uploads/${f.filename}`)) {
+          fs.unlinkSync(`uploads/${f.filename}`);
+        }
+      }
     }
   }
   const discount = Math.round(((oldPrice - price) / oldPrice) * 100);

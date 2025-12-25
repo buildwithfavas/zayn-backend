@@ -1,7 +1,0 @@
-Connected to DB: mongodb+srv://f...
-Fashion Categories Found: 1
- - Fashion (ID: 69452e5453004e99a247adea, Level: first)
-Men Categories Found: 2
- - Men (ID: 694563090caa26846f7b8a07, ParentID: null, Level: second)
- - Men (ID: 694566b20caa26846f7b8a37, ParentID: null, Level: second)
-Orphaned Men Categories: 2
